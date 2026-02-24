@@ -14,6 +14,12 @@ import java.util.Map;
 @Mapper
 public interface CreditRecordMapper {
 
+    // 在 CreditRecordMapper.java 中添加以下方法
+
+    /**
+     * 统计用户信用分增减
+     */
+    Map<String, Object> statisticsByUserId(@Param("userId") Long userId);
     /**
      * 插入信用记录
      */

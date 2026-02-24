@@ -1089,3 +1089,114 @@ ADD CONSTRAINT `fk_review_user` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`)
 ALTER TABLE `product_visit`
 ADD CONSTRAINT `fk_visit_product` FOREIGN KEY (`product_id`) REFERENCES `product` (`id`) ON DELETE CASCADE;
 */
+
+-- =====================================================
+-- 3.1 账号与个人中心相关表
+-- =====================================================
+
+-- 1. 用户收货地址表
+CREATE TABLE IF NOT EXISTS `user_address` (
+    `id` BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '地址ID',
+    `user_id` BIGINT NOT NULL COMMENT '用户ID',
+    `receiver_name` VARCHAR(50) NOT NULL COMMENT '收货人姓名',
+    `receiver_phone` VARCHAR(20) NOT NULL COMMENT '收货人电话',
+    `province` VARCHAR(50) NOT NULL COMMENT '省',
+    `city` VARCHAR(50) NOT NULL COMMENT '市',
+    `district` VARCHAR(50) NOT NULL COMMENT '区',
+    `detail_address` VARCHAR(200) NOT NULL COMMENT '详细地址',
+    `is_default` TINYINT NOT NULL DEFAULT 0 COMMENT '是否默认：0-否 1-是',
+    `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    INDEX `idx_user_id` (`user_id`),
+    INDEX `idx_is_default` (`is_default`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户收货地址表';
+
+-- 2. 用户装备库表
+CREATE TABLE IF NOT EXISTS `user_equipment` (
+    `id` BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '装备ID',
+    `user_id` BIGINT NOT NULL COMMENT '用户ID',
+    `name` VARCHAR(100) NOT NULL COMMENT '装备名称',
+    `brand` VARCHAR(50) COMMENT '品牌',
+    `model` VARCHAR(100) COMMENT '型号',
+    `category` VARCHAR(50) NOT NULL COMMENT '分类',
+    `purchase_date` DATE COMMENT '购买日期',
+    `usage_condition` VARCHAR(20) NOT NULL COMMENT '使用情况：全新/轻微/明显/磨损',
+    `description` TEXT COMMENT '描述',
+    `images` JSON COMMENT '图片URL数组',
+    `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    INDEX `idx_user_id` (`user_id`),
+    INDEX `idx_category` (`category`),
+    FULLTEXT INDEX `ft_name_brand` (`name`, `brand`, `model`) WITH PARSER ngram
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户装备库表';
+
+-- 3. 用户心愿单表
+CREATE TABLE IF NOT EXISTS `user_wish` (
+    `id` BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '心愿ID',
+    `user_id` BIGINT NOT NULL COMMENT '用户ID',
+    `product_name` VARCHAR(100) NOT NULL COMMENT '期望装备名称',
+    `brand` VARCHAR(50) COMMENT '期望品牌',
+    `category` VARCHAR(50) COMMENT '期望分类',
+    `remark` VARCHAR(200) COMMENT '备注',
+    `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    INDEX `idx_user_id` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户心愿单表';
+
+-- 4. 用户收藏表
+CREATE TABLE IF NOT EXISTS `user_favorite` (
+    `id` BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '收藏ID',
+    `user_id` BIGINT NOT NULL COMMENT '用户ID',
+    `type` TINYINT NOT NULL COMMENT '收藏类型：1-商品 2-帖子 3-用户/商家',
+    `target_id` BIGINT NOT NULL COMMENT '目标ID',
+    `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '收藏时间',
+    UNIQUE KEY `uk_user_target` (`user_id`, `type`, `target_id`),
+    INDEX `idx_user_id` (`user_id`),
+    INDEX `idx_target` (`type`, `target_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户收藏表';
+
+-- 5. 用户关注表
+CREATE TABLE IF NOT EXISTS `user_follow` (
+    `id` BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '关注ID',
+    `user_id` BIGINT NOT NULL COMMENT '用户ID',
+    `target_user_id` BIGINT NOT NULL COMMENT '目标用户ID',
+    `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '关注时间',
+    UNIQUE KEY `uk_user_target` (`user_id`, `target_user_id`),
+    INDEX `idx_user_id` (`user_id`),
+    INDEX `idx_target_user_id` (`target_user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户关注表';
+
+-- 6. 信用规则表
+CREATE TABLE IF NOT EXISTS `credit_rule` (
+    `id` BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '规则ID',
+    `name` VARCHAR(100) NOT NULL COMMENT '规则名称',
+    `description` VARCHAR(500) COMMENT '规则描述',
+    `type` TINYINT NOT NULL COMMENT '规则类型：1-加分 2-扣分',
+    `score` INT NOT NULL COMMENT '影响分数',
+    `icon` VARCHAR(50) COMMENT '图标',
+    `sort` INT DEFAULT 0 COMMENT '排序',
+    `status` TINYINT DEFAULT 1 COMMENT '状态：0-禁用 1-启用',
+    `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    INDEX `idx_type` (`type`),
+    INDEX `idx_status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='信用规则表';
+
+-- =====================================================
+-- 初始化数据
+-- =====================================================
+
+-- 初始化信用规则数据
+INSERT INTO `credit_rule` (`name`, `description`, `type`, `score`, `icon`, `sort`) VALUES
+('完善个人资料', '完整填写个人资料', 1, 10, 'profile', 1),
+('实名认证', '完成实名认证', 1, 20, 'verify', 2),
+('绑定邮箱', '绑定邮箱地址', 1, 5, 'email', 3),
+('每日登录', '每日登录应用', 1, 1, 'login', 4),
+('发布帖子', '发布社区帖子', 1, 2, 'post', 5),
+('帖子被加精', '发布的帖子被加精', 1, 10, 'essence', 6),
+('完成交易', '成功完成交易', 1, 5, 'trade', 7),
+('获得好评', '交易获得好评', 1, 3, 'good', 8),
+('违规发言', '发布违规内容', 2, -10, 'violation', 1),
+('交易违约', '交易过程中违约', 2, -20, 'breach', 2),
+('恶意退款', '恶意申请退款', 2, -30, 'refund', 3),
+('收到差评', '交易收到差评', 2, -5, 'bad', 4),
+('虚假交易', '进行虚假交易', 2, -50, 'fake', 5),
+('多次举报', '被多次举报核实', 2, -20, 'report', 6);

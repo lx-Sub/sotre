@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rabbiter.hrm.mapper.FollowMapper">
+
+    <resultMap id="BaseResultMap" type="com.rabbiter.hrm.entity.UserFollow">
+        <id column="id" property="id"/>
+        <result column="user_id" property="userId"/>
+        <result column="target_user_id" property="targetUserId"/>
+        <result column="create_time" property="createTime"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, user_id, target_user_id, create_time
+    </sql>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM user_follow
+        WHERE id = #{id}
+    </select>
+
+    <select id="selectByUserId" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM user_follow
+        WHERE user_id = #{userId}
+        ORDER BY create_time DESC
+    </select>
+
+    <select id="selectByUserAndTarget" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM user_follow
+        WHERE user_id = #{userId} AND target_user_id = #{targetUserId}
+    </select>
+
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO user_follow (user_id, target_user_id, create_time)
+        VALUES (#{userId}, #{targetUserId}, NOW())
+    </insert>
+
+    <delete id="deleteById">
+        DELETE FROM user_follow WHERE id = #{id}
+    </delete>
+
+    <delete id="deleteByUserAndTarget">
+        DELETE FROM user_follow
+        WHERE user_id = #{userId} AND target_user_id = #{targetUserId}
+    </delete>
+
+    <select id="countByUserId" resultType="int">
+        SELECT COUNT(*) FROM user_follow WHERE user_id = #{userId}
+    </select>
+
+    <select id="countFansByUserId" resultType="int">
+        SELECT COUNT(*) FROM user_follow WHERE target_user_id = #{targetUserId}
+    </select>
+
+    <select id="checkMutualFollow" resultType="int">
+        SELECT COUNT(*)
+        FROM user_follow
+        WHERE (user_id = #{userId1} AND target_user_id = #{userId2})
+           OR (user_id = #{userId2} AND target_user_id = #{userId1})
+        HAVING COUNT(*) = 2
+    </select>
+
+</mapper>

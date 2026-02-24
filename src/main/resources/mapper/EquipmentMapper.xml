@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rabbiter.hrm.mapper.EquipmentMapper">
+
+    <resultMap id="BaseResultMap" type="com.rabbiter.hrm.entity.UserEquipment">
+        <id column="id" property="id"/>
+        <result column="user_id" property="userId"/>
+        <result column="name" property="name"/>
+        <result column="brand" property="brand"/>
+        <result column="model" property="model"/>
+        <result column="category" property="category"/>
+        <result column="purchase_date" property="purchaseDate"/>
+        <result column="usage_condition" property="usageCondition"/>
+        <result column="description" property="description"/>
+        <result column="images" property="images"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, user_id, name, brand, model, category, purchase_date,
+        usage_condition, description, images, create_time, update_time
+    </sql>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM user_equipment
+        WHERE id = #{id}
+    </select>
+
+    <select id="selectByUserId" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM user_equipment
+        WHERE user_id = #{userId}
+        <if test="keyword != null and keyword != ''">
+            AND (name LIKE CONCAT('%', #{keyword}, '%')
+            OR brand LIKE CONCAT('%', #{keyword}, '%')
+            OR model LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        <if test="category != null and category != ''">
+            AND category = #{category}
+        </if>
+        ORDER BY create_time DESC
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO user_equipment (
+            user_id, name, brand, model, category, purchase_date,
+            usage_condition, description, images, create_time
+        ) VALUES (
+            #{userId}, #{name}, #{brand}, #{model}, #{category}, #{purchaseDate},
+            #{usageCondition}, #{description}, #{images}, NOW()
+        )
+    </insert>
+
+    <update id="updateById">
+        UPDATE user_equipment
+        <set>
+            <if test="name != null">name = #{name},</if>
+            <if test="brand != null">brand = #{brand},</if>
+            <if test="model != null">model = #{model},</if>
+            <if test="category != null">category = #{category},</if>
+            <if test="purchaseDate != null">purchase_date = #{purchaseDate},</if>
+            <if test="usageCondition != null">usage_condition = #{usageCondition},</if>
+            <if test="description != null">description = #{description},</if>
+            <if test="images != null">images = #{images},</if>
+            update_time = NOW()
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM user_equipment WHERE id = #{id}
+    </delete>
+
+    <select id="countByUserId" resultType="int">
+        SELECT COUNT(*) FROM user_equipment WHERE user_id = #{userId}
+    </select>
+
+</mapper>

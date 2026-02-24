@@ -34,6 +34,20 @@
         type, business_id, operator_id, create_time
     </sql>
 
+    <!-- 在 CreditRecordMapper.xml 中添加 -->
+
+    <!-- 统计用户信用分增减 -->
+    <select id="statisticsByUserId" resultType="java.util.Map">
+        SELECT
+        COALESCE(SUM(CASE WHEN change_score > 0 THEN change_score ELSE 0 END), 0) as total_added,
+        COALESCE(SUM(CASE WHEN change_score &lt;= 0 THEN ABS(change_score) ELSE 0 END), 0) as total_deducted,
+        COUNT(*) as total_count,
+        COUNT(CASE WHEN change_score > 0 THEN 1 END) as add_count,
+        COUNT(CASE WHEN change_score &lt;= 0 THEN 1 END) as deduct_count
+        FROM credit_record
+        WHERE user_id = #{userId}
+    </select>
+
     <!-- 将 create_time 改为正确的字段名 -->
     <select id="selectRecentByUserId" resultType="com.rabbiter.hrm.vo.CreditHistoryVO">
         SELECT
