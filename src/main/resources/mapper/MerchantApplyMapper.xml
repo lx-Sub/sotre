@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rabbiter.hrm.mapper.MerchantApplyMapper">
+
+    <resultMap id="BaseResultMap" type="com.rabbiter.hrm.entity.MerchantApply">
+        <id column="id" property="id"/>
+        <result column="user_id" property="userId"/>
+        <result column="company_name" property="companyName"/>
+        <result column="business_license" property="businessLicense"/>
+        <result column="business_license_url" property="businessLicenseUrl"/>
+        <result column="brand" property="brand"/>
+        <result column="brand_authorization_url" property="brandAuthorizationUrl"/>
+        <result column="contact_name" property="contactName"/>
+        <result column="contact_phone" property="contactPhone"/>
+        <result column="contact_email" property="contactEmail"/>
+        <result column="status" property="status"/>
+        <result column="apply_time" property="applyTime"/>
+        <result column="audit_time" property="auditTime"/>
+        <result column="audit_remark" property="auditRemark"/>
+        <result column="auditor_id" property="auditorId"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, user_id, company_name, business_license, business_license_url, brand,
+        brand_authorization_url, contact_name, contact_phone, contact_email, status,
+        apply_time, audit_time, audit_remark, auditor_id
+    </sql>
+
+    <select id="selectByUserId" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM merchant_apply
+        WHERE user_id = #{userId}
+        ORDER BY apply_time DESC
+        LIMIT 1
+    </select>
+
+    <select id="selectPending" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM merchant_apply
+        WHERE status = 0
+        ORDER BY apply_time ASC
+    </select>
+
+    <select id="selectAll" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM merchant_apply
+        ORDER BY apply_time DESC
+    </select>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM merchant_apply
+        WHERE id = #{id}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO merchant_apply (
+            user_id, company_name, business_license, business_license_url,
+            brand, brand_authorization_url, contact_name, contact_phone,
+            contact_email, status, apply_time
+        ) VALUES (
+            #{userId}, #{companyName}, #{businessLicense}, #{businessLicenseUrl},
+            #{brand}, #{brandAuthorizationUrl}, #{contactName}, #{contactPhone},
+            #{contactEmail}, #{status}, NOW()
+        )
+    </insert>
+
+    <update id="updateById">
+        UPDATE merchant_apply
+        <set>
+            <if test="status != null">status = #{status},</if>
+            <if test="auditTime != null">audit_time = #{auditTime},</if>
+            <if test="auditRemark != null">audit_remark = #{auditRemark},</if>
+            <if test="auditorId != null">auditor_id = #{auditorId},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <!-- 修正后的 selectCredentials 方法 -->
+    <select id="selectCredentials" resultType="com.rabbiter.hrm.vo.CredentialVO">
+        SELECT
+            id,
+            'business_license' as type,
+            business_license_url as fileUrl,
+            business_license as fileName,
+            apply_time as uploadTime,
+            status
+        FROM merchant_apply
+        WHERE user_id = #{userId}
+
+        UNION ALL
+
+        SELECT
+            id,
+            'brand_authorization' as type,
+            brand_authorization_url as fileUrl,
+            brand as fileName,
+            apply_time as uploadTime,
+            status
+        FROM merchant_apply
+        WHERE user_id = #{userId}
+          AND brand_authorization_url IS NOT NULL
+          AND brand_authorization_url != ''
+    </select>
+
+    <select id="countPending" resultType="int">
+        SELECT COUNT(*) FROM merchant_apply WHERE status = 0
+    </select>
+
+</mapper>

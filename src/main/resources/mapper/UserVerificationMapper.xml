@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rabbiter.hrm.mapper.UserVerificationMapper">
+
+    <resultMap id="BaseResultMap" type="com.rabbiter.hrm.entity.UserVerification">
+        <id column="id" property="id"/>
+        <result column="user_id" property="userId"/>
+        <result column="real_name" property="realName"/>
+        <result column="id_number" property="idNumber"/>
+        <result column="id_card_front" property="idCardFront"/>
+        <result column="id_card_back" property="idCardBack"/>
+        <result column="handheld_id_card" property="handheldIdCard"/>
+        <result column="equipment_credentials" property="equipmentCredentials"/>
+        <result column="status" property="status"/>
+        <result column="submit_time" property="submitTime"/>
+        <result column="verify_time" property="verifyTime"/>
+        <result column="verify_remark" property="verifyRemark"/>
+        <result column="verifier_id" property="verifierId"/>
+        <result column="expiry_date" property="expiryDate"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, user_id, real_name, id_number, id_card_front, id_card_back,
+        handheld_id_card, equipment_credentials, status, submit_time,
+        verify_time, verify_remark, verifier_id, expiry_date
+    </sql>
+
+    <select id="selectByUserId" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM user_verification
+        WHERE user_id = #{userId}
+        ORDER BY submit_time DESC
+        LIMIT 1
+    </select>
+
+    <select id="selectPending" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM user_verification
+        WHERE status = 0
+        ORDER BY submit_time ASC
+    </select>
+
+    <select id="selectAll" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM user_verification
+        ORDER BY submit_time DESC
+    </select>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM user_verification
+        WHERE id = #{id}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO user_verification (
+            user_id, real_name, id_number, id_card_front, id_card_back,
+            handheld_id_card, equipment_credentials, status, submit_time
+        ) VALUES (
+            #{userId}, #{realName}, #{idNumber}, #{idCardFront}, #{idCardBack},
+            #{handheldIdCard}, #{equipmentCredentials}, #{status}, #{submitTime}
+        )
+    </insert>
+
+    <update id="updateById">
+        UPDATE user_verification
+        <set>
+            <if test="status != null">status = #{status},</if>
+            <if test="verifyTime != null">verify_time = #{verifyTime},</if>
+            <if test="verifyRemark != null">verify_remark = #{verifyRemark},</if>
+            <if test="verifierId != null">verifier_id = #{verifierId},</if>
+            <if test="expiryDate != null">expiry_date = #{expiryDate},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <select id="countPending" resultType="int">
+        SELECT COUNT(*) FROM user_verification WHERE status = 0
+    </select>
+
+    <select id="countVerified" resultType="int">
+        SELECT COUNT(*) FROM user_verification WHERE status = 1
+    </select>
+
+</mapper>

@@ -3,6 +3,7 @@ package com.rabbiter.hrm.util;
 import cn.hutool.core.date.DateUtil;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
+import org.springframework.stereotype.Component;
 
 import java.util.Date;
 
@@ -12,6 +13,7 @@ import java.util.Date;
  * @Author : 
  * @Date : 2024/1/30
  */
+@Component
 public class JWTUtil {
 
     /**

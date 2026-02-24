@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rabbiter.hrm.mapper.CreditRecordMapper">
+
+    <resultMap id="CreditRecordResultMap" type="com.rabbiter.hrm.entity.CreditRecord">
+        <id column="id" property="id"/>
+        <result column="user_id" property="userId"/>
+        <result column="change_score" property="changeScore"/>
+        <result column="before_score" property="beforeScore"/>
+        <result column="after_score" property="afterScore"/>
+        <result column="reason" property="reason"/>
+        <result column="type" property="type"/>
+        <result column="business_id" property="businessId"/>
+        <result column="operator_id" property="operatorId"/>
+        <result column="create_time" property="createTime"/>
+    </resultMap>
+
+    <resultMap id="CreditAppealResultMap" type="com.rabbiter.hrm.entity.CreditAppeal">
+        <id column="id" property="id"/>
+        <result column="user_id" property="userId"/>
+        <result column="credit_record_id" property="creditRecordId"/>
+        <result column="reason" property="reason"/>
+        <result column="evidence" property="evidence"/>
+        <result column="status" property="status"/>
+        <result column="feedback" property="feedback"/>
+        <result column="handler_id" property="handlerId"/>
+        <result column="handle_time" property="handleTime"/>
+        <result column="create_time" property="createTime"/>
+    </resultMap>
+
+    <sql id="CreditRecord_Column_List">
+        id, user_id, change_score, before_score, after_score, reason,
+        type, business_id, operator_id, create_time
+    </sql>
+
+    <!-- 将 create_time 改为正确的字段名 -->
+    <select id="selectRecentByUserId" resultType="com.rabbiter.hrm.vo.CreditHistoryVO">
+        SELECT
+        cr.id,
+        cr.user_id as userId,
+        cr.change_score as changeScore,
+        cr.before_score as beforeScore,
+        cr.after_score as afterScore,
+        cr.reason,
+        cr.type,
+        cr.operator_id as operatorId,
+        u.username as operatorName,
+        cr.create_time as createTime  <!-- 确认 credit_record 表中有 create_time 字段 -->
+        FROM credit_record cr
+        LEFT JOIN user u ON cr.operator_id = u.id
+        WHERE cr.user_id = #{userId}
+        ORDER BY cr.create_time DESC
+        LIMIT #{limit}
+    </select>
+
+    <!-- 插入信用记录 -->
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO credit_record (
+            user_id, change_score, before_score, after_score, reason,
+            type, business_id, operator_id, create_time
+        ) VALUES (
+            #{userId}, #{changeScore}, #{beforeScore}, #{afterScore}, #{reason},
+            #{type}, #{businessId}, #{operatorId}, NOW()
+        )
+    </insert>
+
+    <!-- 查询用户的信用记录 -->
+    <select id="selectByUserId" resultMap="CreditRecordResultMap">
+        SELECT <include refid="CreditRecord_Column_List"/>
+        FROM credit_record
+        WHERE user_id = #{userId}
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 统计用户违规次数 -->
+    <select id="countViolations" resultType="int">
+        SELECT COUNT(*)
+        FROM credit_record
+        WHERE user_id = #{userId} AND type = 'violation'
+    </select>
+
+    <!-- 统计用户申诉次数 -->
+    <select id="countAppeals" resultType="int">
+        SELECT COUNT(*)
+        FROM credit_appeal
+        WHERE user_id = #{userId}
+    </select>
+
+    <!-- 根据ID查询申诉 -->
+    <select id="selectAppealById" resultMap="CreditAppealResultMap">
+        SELECT * FROM credit_appeal WHERE id = #{id}
+    </select>
+
+    <!-- 更新申诉 -->
+    <update id="updateAppeal">
+        UPDATE credit_appeal
+        <set>
+            <if test="status != null">status = #{status},</if>
+            <if test="feedback != null">feedback = #{feedback},</if>
+            <if test="handlerId != null">handler_id = #{handlerId},</if>
+            <if test="handleTime != null">handle_time = #{handleTime},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+</mapper>

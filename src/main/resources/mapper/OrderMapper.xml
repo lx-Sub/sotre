@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rabbiter.hrm.mapper.OrderMapper">
+
+    <resultMap id="BaseResultMap" type="com.rabbiter.hrm.entity.Order">
+        <id column="id" property="id"/>
+        <result column="order_no" property="orderNo"/>
+        <result column="order_type" property="orderType"/>
+        <result column="user_id" property="userId"/>
+        <result column="other_user_id" property="otherUserId"/>
+        <result column="product_id" property="productId"/>
+        <result column="product_name" property="productName"/>
+        <result column="product_image" property="productImage"/>
+        <result column="product_count" property="productCount"/>
+        <result column="amount" property="amount"/>
+        <result column="status" property="status"/>
+        <result column="payment_method" property="paymentMethod"/>
+        <result column="payment_time" property="paymentTime"/>
+        <result column="delivery_time" property="deliveryTime"/>
+        <result column="complete_time" property="completeTime"/>
+        <result column="has_dispute" property="hasDispute"/>
+        <result column="create_time" property="createTime"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, order_no, order_type, user_id, other_user_id, product_id, product_name,
+        product_image, product_count, amount, status, payment_method, payment_time,
+        delivery_time, complete_time, has_dispute, create_time
+    </sql>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM orders
+        WHERE id = #{id}
+    </select>
+
+    <select id="selectByOrderNo" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM orders
+        WHERE order_no = #{orderNo}
+    </select>
+
+    <select id="selectByUserId" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM orders
+        WHERE user_id = #{userId} OR other_user_id = #{userId}
+        ORDER BY create_time DESC
+        LIMIT 10
+    </select>
+
+    <select id="countByUserId" resultType="int">
+        SELECT COUNT(*)
+        FROM orders
+        WHERE user_id = #{userId} OR other_user_id = #{userId}
+    </select>
+
+    <select id="selectAll" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM orders
+        ORDER BY create_time DESC
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO orders (
+            order_no, order_type, user_id, other_user_id, product_id,
+            product_name, product_image, product_count, amount, status,
+            payment_method, create_time
+        ) VALUES (
+            #{orderNo}, #{orderType}, #{userId}, #{otherUserId}, #{productId},
+            #{productName}, #{productImage}, #{productCount}, #{amount}, #{status},
+            #{paymentMethod}, #{createTime}
+        )
+    </insert>
+
+    <update id="updateById">
+        UPDATE orders
+        <set>
+            <if test="status != null">status = #{status},</if>
+            <if test="paymentTime != null">payment_time = #{paymentTime},</if>
+            <if test="deliveryTime != null">delivery_time = #{deliveryTime},</if>
+            <if test="completeTime != null">complete_time = #{completeTime},</if>
+            <if test="hasDispute != null">has_dispute = #{hasDispute},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <select id="countToday" resultType="int">
+        SELECT COUNT(*) FROM orders
+        WHERE DATE(create_time) = CURDATE()
+    </select>
+
+    <select id="sumTodayAmount" resultType="double">
+        SELECT COALESCE(SUM(amount), 0) FROM orders
+        WHERE DATE(create_time) = CURDATE() AND status = 3
+    </select>
+
+</mapper>

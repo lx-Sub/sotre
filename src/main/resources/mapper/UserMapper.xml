@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rabbiter.hrm.mapper.UserMapper">
+
+    <resultMap id="BaseResultMap" type="com.rabbiter.hrm.entity.User">
+        <id column="id" property="id"/>
+        <result column="username" property="username"/>
+        <result column="password" property="password"/>
+        <result column="nickname" property="nickname"/>
+        <result column="avatar" property="avatar"/>
+        <result column="phone" property="phone"/>
+        <result column="email" property="email"/>
+        <result column="role" property="role"/>
+        <result column="status" property="status"/>
+        <result column="merchant_status" property="merchantStatus"/>
+        <result column="credit_score" property="creditScore"/>
+        <result column="verified" property="verified"/>
+        <result column="consignment_enabled" property="consignmentEnabled"/>
+        <result column="consignment_expiry" property="consignmentExpiry"/>
+        <result column="last_login_time" property="lastLoginTime"/>
+        <result column="last_login_ip" property="lastLoginIp"/>
+        <result column="create_time" property="createTime"/>
+        <result column="delete_time" property="deleteTime"/>
+    </resultMap>
+
+    <!-- 基础字段列表 - 完全匹配实体类字段 -->
+    <sql id="Base_Column_List">
+        id, username, password, nickname, avatar, phone, email, role, status,
+        merchant_status, credit_score, verified, consignment_enabled, consignment_expiry,
+        last_login_time, last_login_ip, create_time, delete_time
+    </sql>
+
+    <!-- 根据手机号查询用户 -->
+    <select id="selectByPhone" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM user
+        WHERE phone = #{phone}
+    </select>
+
+    <!-- 根据ID查询用户 -->
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM user
+        WHERE id = #{id}
+    </select>
+
+    <!-- 查询用户列表（带条件）- 匹配你的selectList方法 -->
+    <select id="selectList" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM user
+        <where>
+            <if test="keyword != null and keyword != ''">
+                AND (username LIKE CONCAT('%', #{keyword}, '%')
+                OR phone LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+            <if test="role != null">
+                AND role = #{role}
+            </if>
+            <if test="status != null">
+                AND status = #{status}
+            </if>
+        </where>
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 根据条件查询用户（用于管理员列表）- 新增 -->
+    <select id="selectByCondition" parameterType="com.rabbiter.hrm.dto.UserQueryDTO"
+            resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM user
+        <where>
+            <if test="keyword != null and keyword != ''">
+                AND (username LIKE CONCAT('%', #{keyword}, '%')
+                OR nickname LIKE CONCAT('%', #{keyword}, '%')
+                OR phone LIKE CONCAT('%', #{keyword}, '%')
+                OR email LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+            <if test="role != null">
+                AND role = #{role}
+            </if>
+            <if test="status != null">
+                AND status = #{status}
+            </if>
+            <if test="startDate != null">
+                AND create_time >= #{startDate}
+            </if>
+            <if test="endDate != null">
+                AND create_time &lt;= #{endDate}
+            </if>
+        </where>
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 根据条件查询用户（用于信用分列表） -->
+    <select id="selectByCreditCondition" parameterType="com.rabbiter.hrm.dto.CreditQueryDTO"
+            resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM user
+        <where>
+            <if test="keyword != null and keyword != ''">
+                AND (username LIKE CONCAT('%', #{keyword}, '%')
+                OR nickname LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+            <if test="minScore != null">
+                AND credit_score >= #{minScore}
+            </if>
+            <if test="maxScore != null">
+                AND credit_score &lt;= #{maxScore}
+            </if>
+        </where>
+        ORDER BY credit_score DESC
+    </select>
+
+    <!-- 插入用户 - 匹配你的insert方法 -->
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO user (
+            username, password, nickname, avatar, phone, email, role, status,
+            merchant_status, credit_score, verified, consignment_enabled,
+            consignment_expiry, last_login_time, last_login_ip, create_time
+        ) VALUES (
+            #{username}, #{password}, #{nickname}, #{avatar}, #{phone}, #{email},
+            #{role}, #{status}, #{merchantStatus}, #{creditScore}, #{verified},
+            #{consignmentEnabled}, #{consignmentExpiry}, #{lastLoginTime},
+            #{lastLoginIp}, NOW()
+        )
+    </insert>
+
+    <!-- 更新用户信息 - 匹配你的update方法 -->
+    <update id="update">
+        UPDATE user
+        <set>
+            <if test="username != null">username = #{username},</if>
+            <if test="email != null">email = #{email},</if>
+            <if test="avatar != null">avatar = #{avatar},</if>
+            <if test="nickname != null">nickname = #{nickname},</if>
+            <if test="phone != null">phone = #{phone},</if>
+            update_time = NOW()
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <!-- 更新用户状态 - 匹配你的updateStatus方法 -->
+    <update id="updateStatus">
+        UPDATE user
+        SET status = #{status}
+        WHERE id = #{id}
+    </update>
+
+    <!-- 更新用户信用分 - 匹配你的updateCreditScore方法 -->
+    <update id="updateCreditScore">
+        UPDATE user
+        SET credit_score = #{score}
+        WHERE id = #{id}
+    </update>
+
+    <!-- 根据ID更新用户（完整更新）- 用于管理员操作 -->
+    <update id="updateById">
+        UPDATE user
+        <set>
+            <if test="username != null">username = #{username},</if>
+            <if test="nickname != null">nickname = #{nickname},</if>
+            <if test="avatar != null">avatar = #{avatar},</if>
+            <if test="phone != null">phone = #{phone},</if>
+            <if test="email != null">email = #{email},</if>
+            <if test="role != null">role = #{role},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="merchantStatus != null">merchant_status = #{merchantStatus},</if>
+            <if test="creditScore != null">credit_score = #{creditScore},</if>
+            <if test="verified != null">verified = #{verified},</if>
+            <if test="consignmentEnabled != null">consignment_enabled = #{consignmentEnabled},</if>
+            <if test="consignmentExpiry != null">consignment_expiry = #{consignmentExpiry},</if>
+            <if test="lastLoginTime != null">last_login_time = #{lastLoginTime},</if>
+            <if test="lastLoginIp != null">last_login_ip = #{lastLoginIp},</if>
+            <if test="deleteTime != null">delete_time = #{deleteTime},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <!-- 批量更新用户状态 -->
+    <update id="batchUpdateStatus">
+        UPDATE user
+        SET status = #{status}
+        WHERE id IN
+        <foreach collection="userIds" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
+
+</mapper>

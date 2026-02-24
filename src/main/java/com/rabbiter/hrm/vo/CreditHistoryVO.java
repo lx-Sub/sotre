@@ -1,13 +1,13 @@
-package com.rabbiter.hrm.entity;
+package com.rabbiter.hrm.vo;
 
 import lombok.Data;
 import java.time.LocalDateTime;
 
 /**
- * 信用记录实体类
+ * 信用历史视图对象
  */
 @Data
-public class CreditRecord {
+public class CreditHistoryVO {
 
     /**
      * 记录ID
@@ -45,14 +45,14 @@ public class CreditRecord {
     private String type;
 
     /**
-     * 关联的业务ID（订单ID、申诉ID等）
-     */
-    private Long businessId;
-
-    /**
      * 操作人ID
      */
     private Long operatorId;
+
+    /**
+     * 操作人姓名
+     */
+    private String operatorName;
 
     /**
      * 创建时间

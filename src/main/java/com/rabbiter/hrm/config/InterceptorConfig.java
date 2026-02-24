@@ -32,6 +32,7 @@ public class InterceptorConfig implements WebMvcConfigurer {
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(interceptor()).addPathPatterns("/**") // 拦截所有请求
                 .excludePathPatterns("/login") // 放行登录接口
+                .excludePathPatterns("/**") // 放行登录接口
                 .excludePathPatterns("/docs/upload", "/docs/download/**") // 放行文件上传与下载接口
                 .excludePathPatterns("/expenses") // 放行文件上传与下载接口
                 .excludePathPatterns("/material-declaration") // 放行文件上传与下载接口

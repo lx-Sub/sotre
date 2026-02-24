@@ -1,6 +1,7 @@
 # IDE - IntelliJ IDEA
 .idea/
-*.iml
+HumanResourcesManager.iml
+
 *.iws
 *.ipr
 
