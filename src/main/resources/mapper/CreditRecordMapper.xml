@@ -176,4 +176,14 @@
         </foreach>
     </insert>
 
+    <!-- 根据类型统计数量 -->
+    <select id="countByType" resultType="int">
+        SELECT COUNT(*) FROM credit_record WHERE type = #{type}
+    </select>
+
+    <!-- 统计待处理的信用申诉 -->
+    <select id="countPendingAppeals" resultType="int">
+        SELECT COUNT(*) FROM credit_appeal WHERE status = 0
+    </select>
+
 </mapper>

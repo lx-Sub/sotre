@@ -208,13 +208,6 @@
         </where>
     </select>
 
-    <!-- 更新用户信用分 -->
-    <update id="updateCreditScore">
-    UPDATE user
-    SET credit_score = #{score}
-    WHERE id = #{id}
-</update>
-
     <!-- 更新商家状态 -->
     <update id="updateMerchantStatus">
     UPDATE user
@@ -276,6 +269,85 @@
         </where>
         GROUP BY DATE(create_time)
         ORDER BY date DESC
+    </select>
+
+    <!-- 根据时间范围统计用户数量 -->
+    <select id="countByDate" resultType="int">
+        SELECT COUNT(*) FROM user
+        WHERE create_time BETWEEN #{startDate} AND #{endDate}
+    </select>
+
+    <!-- 统计活跃用户数 -->
+    <select id="countActiveUsers" resultType="int">
+        SELECT COUNT(DISTINCT user_id)
+        FROM orders
+        WHERE create_time >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+    </select>
+
+    <!-- 根据状态统计 -->
+    <select id="countByStatus" resultType="int">
+        SELECT COUNT(*) FROM user WHERE status = #{status}
+    </select>
+
+    <!-- 根据角色统计 -->
+    <select id="countByRole" resultType="int">
+        SELECT COUNT(*) FROM user WHERE role = #{role}
+    </select>
+
+    <!-- 根据商家状态统计 -->
+    <select id="countByMerchantStatus" resultType="int">
+        SELECT COUNT(*) FROM user WHERE merchant_status = #{merchantStatus}
+    </select>
+
+    <!-- 根据信用分范围统计 -->
+    <select id="countByCreditRange" resultType="int">
+        SELECT COUNT(*) FROM user
+        WHERE credit_score BETWEEN #{min} AND #{max}
+    </select>
+
+    <!-- 平均信用分 -->
+    <select id="avgCreditScore" resultType="double">
+        SELECT AVG(credit_score) FROM user WHERE status = 1
+    </select>
+
+    <!-- 最高信用分 -->
+    <select id="maxCreditScore" resultType="int">
+        SELECT MAX(credit_score) FROM user WHERE status = 1
+    </select>
+
+    <!-- 最低信用分 -->
+    <select id="minCreditScore" resultType="int">
+        SELECT MIN(credit_score) FROM user WHERE status = 1
+    </select>
+
+    <!-- 查询信用分最高的用户 -->
+    <select id="selectTopCreditUsers" resultMap="BaseResultMap">
+        SELECT * FROM user
+        WHERE status = 1
+        ORDER BY credit_score DESC
+        LIMIT #{limit}
+    </select>
+
+    <!-- 查询信用分最低的用户 -->
+    <select id="selectBottomCreditUsers" resultMap="BaseResultMap">
+        SELECT * FROM user
+        WHERE status = 1
+        ORDER BY credit_score ASC
+        LIMIT #{limit}
+    </select>
+
+    <!-- 按日期范围统计用户 -->
+    <select id="statisticsByDateRange" resultType="java.util.Map">
+        SELECT
+            DATE(create_time) as date,
+            COUNT(*) as new_count,
+            COUNT(DISTINCT
+                CASE WHEN last_login_time BETWEEN #{startDate} AND #{endDate}
+                THEN id END) as active_count
+        FROM user
+        WHERE create_time BETWEEN #{startDate} AND #{endDate}
+        GROUP BY DATE(create_time)
+        ORDER BY date
     </select>
 
 </mapper>

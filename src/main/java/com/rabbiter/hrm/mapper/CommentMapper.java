@@ -78,4 +78,9 @@ public interface CommentMapper {
      * 根据帖子ID删除评论
      */
     void deleteByPostId(@Param("postId") Long postId);
+
+    /**
+     * 统计所有评论数
+     */
+    int countAll();
 }

@@ -82,4 +82,14 @@ public interface CreditRecordMapper {
      * 批量插入信用记录
      */
     void batchInsert(List<CreditRecord> records);
+
+    /**
+     * 根据类型统计数量
+     */
+    int countByType(@Param("type") String type);
+
+    /**
+     * 统计待处理的信用申诉
+     */
+    int countPendingAppeals();
 }

@@ -186,4 +186,28 @@
         DELETE FROM post WHERE id = #{id}
     </delete>
 
+    <!-- 统计所有帖子数 -->
+    <select id="countAll" resultType="int">
+        SELECT COUNT(*) FROM post
+    </select>
+
+    <!-- 按日期统计帖子数 -->
+    <select id="countByDate" resultType="int">
+        SELECT COUNT(*) FROM post
+        WHERE create_time BETWEEN #{startDate} AND #{endDate}
+    </select>
+
+    <!-- 按分类统计帖子分布 -->
+    <select id="statisticsByCategory" resultType="java.util.Map">
+        SELECT
+        category,
+        COUNT(*) as post_count
+        FROM post
+        WHERE status = 1
+        GROUP BY category
+        ORDER BY post_count DESC
+        <if test="limit != null">
+            LIMIT #{limit}
+        </if>
+    </select>
 </mapper>

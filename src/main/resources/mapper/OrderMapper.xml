@@ -157,5 +157,125 @@
         </set>
         WHERE id = #{id}
     </update>
+    <!-- 统计所有订单数 -->
+    <select id="countAll" resultType="int">
+        SELECT COUNT(*) FROM `order`
+    </select>
 
+    <!-- 按日期范围统计订单数 -->
+    <select id="countByDateRange" resultType="int">
+        SELECT COUNT(*) FROM `order`
+        WHERE create_time BETWEEN #{startDate} AND #{endDate}
+    </select>
+
+    <!-- 按日期统计订单数 -->
+    <select id="countByDate" resultType="int">
+        SELECT COUNT(*) FROM `order`
+        WHERE create_time BETWEEN #{startDate} AND #{endDate}
+    </select>
+
+    <!-- 按状态统计订单数 -->
+    <select id="countByStatus" resultType="int">
+        SELECT COUNT(*) FROM `order`
+        WHERE status = #{status}
+    </select>
+
+    <!-- 按状态和日期统计 -->
+    <select id="countByStatusAndDate" resultType="int">
+        SELECT COUNT(*) FROM `order`
+        WHERE status = #{status}
+        AND create_time BETWEEN #{startDate} AND #{endDate}
+    </select>
+
+    <!-- 按类型和日期统计 -->
+    <select id="countByTypeAndDate" resultType="int">
+        SELECT COUNT(*) FROM `order`
+        WHERE order_type = #{orderType}
+        AND create_time BETWEEN #{startDate} AND #{endDate}
+    </select>
+
+    <!-- 统计不同日期的活跃用户数 -->
+    <select id="countDistinctUsersByDate" resultType="int">
+        SELECT COUNT(DISTINCT
+            CASE
+                WHEN buyer_id IS NOT NULL THEN buyer_id
+                ELSE seller_id
+            END
+        ) FROM `order`
+        WHERE create_time BETWEEN #{startDate} AND #{endDate}
+    </select>
+
+    <!-- 按状态统计交易额 -->
+    <select id="sumAmountByStatus" resultType="java.math.BigDecimal">
+        SELECT COALESCE(SUM(total_amount), 0) FROM `order`
+        WHERE status = #{status}
+    </select>
+
+    <!-- 按日期范围统计交易额 -->
+    <select id="sumAmountByDateRange" resultType="java.math.BigDecimal">
+        SELECT COALESCE(SUM(total_amount), 0) FROM `order`
+        WHERE create_time BETWEEN #{startDate} AND #{endDate}
+        AND status = 3  <!-- 只统计已完成订单 -->
+    </select>
+
+    <!-- 按日期统计交易额 -->
+    <select id="sumAmountByDate" resultType="java.math.BigDecimal">
+        SELECT COALESCE(SUM(total_amount), 0) FROM `order`
+        WHERE create_time BETWEEN #{startDate} AND #{endDate}
+        AND status = 3
+    </select>
+
+    <!-- 按支付方式和日期统计交易额 -->
+    <select id="sumAmountByPaymentAndDate" resultType="java.math.BigDecimal">
+        SELECT COALESCE(SUM(total_amount), 0) FROM `order`
+        WHERE payment_method = #{paymentMethod}
+        AND create_time BETWEEN #{startDate} AND #{endDate}
+        AND status = 3
+    </select>
+
+    <!-- 平均交易额 -->
+    <select id="avgAmountByDateRange" resultType="java.math.BigDecimal">
+        SELECT COALESCE(AVG(total_amount), 0) FROM `order`
+        WHERE create_time BETWEEN #{startDate} AND #{endDate}
+        AND status = 3
+    </select>
+
+    <!-- 最大交易额 -->
+    <select id="maxAmountByDateRange" resultType="java.math.BigDecimal">
+        SELECT COALESCE(MAX(total_amount), 0) FROM `order`
+        WHERE create_time BETWEEN #{startDate} AND #{endDate}
+        AND status = 3
+    </select>
+
+    <!-- 按日期范围统计订单趋势 -->
+    <select id="statisticsByDateRange" resultType="java.util.Map">
+        SELECT
+            DATE(create_time) as date,
+            COUNT(*) as order_count,
+            COALESCE(SUM(total_amount), 0) as amount
+        FROM `order`
+        WHERE create_time BETWEEN #{startDate} AND #{endDate}
+        GROUP BY DATE(create_time)
+        ORDER BY date
+    </select>
+
+    <!-- 按日期范围统计金额趋势 -->
+    <select id="amountStatisticsByDateRange" resultType="java.util.Map">
+        SELECT
+            DATE(create_time) as date,
+            COALESCE(SUM(total_amount), 0) as amount,
+            COUNT(*) as order_count
+        FROM `order`
+        WHERE create_time BETWEEN #{startDate} AND #{endDate}
+        AND status = 3
+        GROUP BY DATE(create_time)
+        ORDER BY date
+    </select>
+
+    <!-- 根据商品分类统计订单数 -->
+    <select id="countByProductCategory" resultType="int">
+        SELECT COUNT(*) FROM `order` o
+        INNER JOIN product p ON o.product_id = p.id
+        WHERE p.category = #{category}
+    </select>
 </mapper>

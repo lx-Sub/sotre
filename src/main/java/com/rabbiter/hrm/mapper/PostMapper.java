@@ -3,7 +3,10 @@ package com.rabbiter.hrm.mapper;
 import com.rabbiter.hrm.entity.Post;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 帖子Mapper接口
@@ -101,4 +104,20 @@ public interface PostMapper {
      * 删除帖子
      */
     void deleteById(@Param("id") Long id);
+
+    /**
+     * 统计所有帖子数
+     */
+    int countAll();
+
+    /**
+     * 按日期统计帖子数
+     */
+    int countByDate(@Param("startDate") LocalDateTime startDate,
+                    @Param("endDate") LocalDateTime endDate);
+
+    /**
+     * 按分类统计帖子分布
+     */
+    List<Map<String, Object>> statisticsByCategory(@Param("limit") Integer limit);
 }

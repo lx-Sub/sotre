@@ -5,6 +5,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import java.util.List;
 import java.math.BigDecimal;
+import java.util.Map;
 
 /**
  * 商品Mapper接口
@@ -14,6 +15,13 @@ import java.math.BigDecimal;
 @Mapper
 public interface ProductMapper {
 
+    /**
+     * 根据条件统计商品数量
+     */
+    int countByCondition(@Param("keyword") String keyword,
+                         @Param("category") String category,
+                         @Param("status") Integer status,
+                         @Param("userId") Long userId);
     /**
      * 根据ID查询商品
      */
@@ -101,4 +109,45 @@ public interface ProductMapper {
      * 删除商品
      */
     void deleteById(@Param("id") Long id);
+
+    /**
+     * 统计所有商品数
+     */
+    int countAll();
+
+    /**
+     * 根据状态统计商品数
+     */
+    int countByStatus(@Param("status") Integer status);
+
+    /**
+     * 根据卖家类型统计
+     */
+    int countByUserType(@Param("userType") Integer userType);
+
+    /**
+     * 根据价格区间统计
+     */
+    int countByPriceRange(@Param("min") BigDecimal min,
+                          @Param("max") BigDecimal max);
+
+    /**
+     * 统计售罄商品数
+     */
+    int countSoldOut();
+
+    /**
+     * 根据分类统计商品数
+     */
+    int countByCategory(@Param("category") String category);
+
+    /**
+     * 按分类统计商品分布
+     */
+    List<Map<String, Object>> statisticsByCategory();
+
+    /**
+     * 查询热门商品
+     */
+    List<Product> selectHotProducts(@Param("limit") Integer limit);
 }

@@ -55,12 +55,6 @@ public interface UserMapper {
 
     // 在 UserMapper.java 中添加以下方法
 
-    /**
-     * 根据条件统计用户数量
-     */
-    int countByCondition(@Param("keyword") String keyword,
-                         @Param("role") Integer role,
-                         @Param("status") Integer status);
 
     /**
      * 更新用户信用分
@@ -103,4 +97,75 @@ public interface UserMapper {
      */
     List<Map<String, Object>> statisticsByDay(@Param("startDate") LocalDateTime startDate,
                                               @Param("endDate") LocalDateTime endDate);
+
+    /**
+     * 根据条件统计用户数量
+     */
+    int countByCondition(@Param("keyword") String keyword,
+                         @Param("role") Integer role,
+                         @Param("status") Integer status);
+
+    /**
+     * 根据时间范围统计用户数量
+     */
+    int countByDate(@Param("startDate") LocalDateTime startDate,
+                    @Param("endDate") LocalDateTime endDate);
+
+    /**
+     * 统计活跃用户数
+     */
+    int countActiveUsers();
+
+    /**
+     * 根据状态统计用户数
+     */
+    int countByStatus(@Param("status") Integer status);
+
+    /**
+     * 根据角色统计用户数
+     */
+    int countByRole(@Param("role") Integer role);
+
+    /**
+     * 根据商家状态统计
+     */
+    int countByMerchantStatus(@Param("merchantStatus") Integer merchantStatus);
+
+    /**
+     * 根据信用分范围统计
+     */
+    int countByCreditRange(@Param("min") Integer min,
+                           @Param("max") Integer max);
+
+    /**
+     * 平均信用分
+     */
+    Double avgCreditScore();
+
+    /**
+     * 最高信用分
+     */
+    Integer maxCreditScore();
+
+    /**
+     * 最低信用分
+     */
+    Integer minCreditScore();
+
+    /**
+     * 查询信用分最高的用户
+     */
+    List<User> selectTopCreditUsers(@Param("limit") Integer limit);
+
+    /**
+     * 查询信用分最低的用户
+     */
+    List<User> selectBottomCreditUsers(@Param("limit") Integer limit);
+
+    /**
+     * 按日期范围统计用户
+     */
+    List<Map<String, Object>> statisticsByDateRange(@Param("startDate") LocalDateTime startDate,
+                                                    @Param("endDate") LocalDateTime endDate,
+                                                    @Param("groupBy") String groupBy);
 }

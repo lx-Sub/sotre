@@ -35,6 +35,26 @@
         update_time, shelf_time
     </sql>
 
+    <!-- 根据条件统计商品数量 -->
+    <select id="countByCondition" resultType="int">
+        SELECT COUNT(*) FROM product
+        <where>
+            <if test="keyword != null and keyword != ''">
+                AND (name LIKE CONCAT('%', #{keyword}, '%')
+                OR description LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+            <if test="category != null and category != ''">
+                AND category = #{category}
+            </if>
+            <if test="status != null">
+                AND status = #{status}
+            </if>
+            <if test="userId != null">
+                AND user_id = #{userId}
+            </if>
+        </where>
+    </select>
+
     <!-- 根据ID查询 -->
     <select id="selectById" resultMap="BaseResultMap">
         SELECT <include refid="Base_Column_List"/>
@@ -194,4 +214,59 @@
         DELETE FROM product WHERE id = #{id}
     </delete>
 
+    <!-- 统计所有商品数 -->
+    <select id="countAll" resultType="int">
+        SELECT COUNT(*) FROM product
+    </select>
+
+    <!-- 根据状态统计 -->
+    <select id="countByStatus" resultType="int">
+        SELECT COUNT(*) FROM product WHERE status = #{status}
+    </select>
+
+    <!-- 根据卖家类型统计 -->
+    <select id="countByUserType" resultType="int">
+        SELECT COUNT(*) FROM product WHERE user_type = #{userType}
+    </select>
+
+    <!-- 根据价格区间统计 -->
+    <select id="countByPriceRange" resultType="int">
+        SELECT COUNT(*) FROM product
+        WHERE status = 1
+        <if test="min != null">
+            AND price >= #{min}
+        </if>
+        <if test="max != null">
+            AND price &lt;= #{max}
+        </if>
+    </select>
+
+    <!-- 统计售罄商品数 -->
+    <select id="countSoldOut" resultType="int">
+        SELECT COUNT(*) FROM product WHERE stock = 0 AND status = 1
+    </select>
+
+    <!-- 根据分类统计商品数 -->
+    <select id="countByCategory" resultType="int">
+        SELECT COUNT(*) FROM product WHERE category = #{category}
+    </select>
+
+    <!-- 按分类统计商品分布 -->
+    <select id="statisticsByCategory" resultType="java.util.Map">
+        SELECT
+            category,
+            COUNT(*) as count
+        FROM product
+        WHERE status = 1
+        GROUP BY category
+        ORDER BY count DESC
+    </select>
+
+    <!-- 查询热门商品 -->
+    <select id="selectHotProducts" resultMap="BaseResultMap">
+        SELECT * FROM product
+        WHERE status = 1
+        ORDER BY (view_count * 0.3 + sale_count * 0.5 + favorite_count * 0.2) DESC
+        LIMIT #{limit}
+    </select>
 </mapper>

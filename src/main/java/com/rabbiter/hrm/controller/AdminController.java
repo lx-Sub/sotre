@@ -8,10 +8,15 @@ import com.rabbiter.hrm.service.AdminUserService;
 import com.rabbiter.hrm.vo.*;
 import com.github.pagehelper.PageInfo;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.format.annotation.DateTimeFormat;
+
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
+import java.io.IOException;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @RestController
@@ -594,4 +599,196 @@ public class AdminController {
         PageInfo<OperationLogVO> pageInfo = adminService.getOperationLogs(queryDTO);
         return Response.success(pageInfo);
     }
+
+    // ==================== 数据统计 ====================
+
+    /**
+     * 获取核心数据概览
+     */
+    @GetMapping("/statistics/overview")
+    public ResponseDTO getStatisticsOverview() {
+        StatisticsOverviewVO overview = adminService.getStatisticsOverview();
+        return Response.success(overview);
+    }
+
+    /**
+     * 获取用户统计数据
+     */
+    @GetMapping("/statistics/users")
+    public ResponseDTO getUserStatistics(
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDateTime startDate,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDateTime endDate,
+            @RequestParam(defaultValue = "day") String groupBy) { // day, week, month
+
+        UserStatisticsVO statistics = adminService.getUserStatistics(startDate, endDate, groupBy);
+        return Response.success(statistics);
+    }
+
+    /**
+     * 获取订单统计数据
+     */
+    @GetMapping("/statistics/orders")
+    public ResponseDTO getOrderStatistics(
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDateTime startDate,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDateTime endDate,
+            @RequestParam(defaultValue = "day") String groupBy) {
+
+        OrderStatisticsVO statistics = adminService.getOrderStatistics(startDate, endDate, groupBy);
+        return Response.success(statistics);
+    }
+
+    /**
+     * 获取交易金额统计
+     */
+    @GetMapping("/statistics/amount")
+    public ResponseDTO getAmountStatistics(
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDateTime startDate,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDateTime endDate,
+            @RequestParam(defaultValue = "day") String groupBy) {
+
+        AmountStatisticsVO statistics = adminService.getAmountStatistics(startDate, endDate, groupBy);
+        return Response.success(statistics);
+    }
+
+    /**
+     * 获取商品统计数据
+     */
+    @GetMapping("/statistics/products")
+    public ResponseDTO getProductStatistics(
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDateTime startDate,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDateTime endDate) {
+
+        ProductStatisticsVO statistics = adminService.getProductStatistics(startDate, endDate);
+        return Response.success(statistics);
+    }
+
+    /**
+     * 获取信用分分布统计
+     */
+    @GetMapping("/statistics/credit")
+    public ResponseDTO getCreditStatistics() {
+        CreditStatisticsVO statistics = adminService.getCreditStatistics();
+        return Response.success(statistics);
+    }
+
+    /**
+     * 获取热门分类统计
+     */
+    @GetMapping("/statistics/categories")
+    public ResponseDTO getCategoryStatistics(
+            @RequestParam(defaultValue = "10") Integer limit) {
+
+        List<CategoryStatVO> statistics = adminService.getCategoryStatistics(limit);
+        return Response.success(statistics);
+    }
+
+// ==================== 数据导出 ====================
+
+    /**
+     * 导出用户列表
+     */
+    @GetMapping("/export/users")
+    public ResponseEntity<byte[]> exportUsers(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) Integer role,
+            @RequestParam(required = false) Integer status,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDateTime startDate,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDateTime endDate,
+            HttpServletResponse response) throws IOException {
+
+        UserQueryDTO queryDTO = UserQueryDTO.builder()
+                .keyword(keyword)
+                .role(role)
+                .status(status)
+                .startDate(startDate)
+                .endDate(endDate)
+                .build();
+
+        byte[] excelData = adminService.exportUsers(queryDTO);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+        headers.setContentDisposition(ContentDisposition.builder("attachment")
+                .filename("users_" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")) + ".xlsx")
+                .build());
+
+        return new ResponseEntity<>(excelData, headers, HttpStatus.OK);
+    }
+
+    /**
+     * 导出订单列表
+     */
+    @GetMapping("/export/orders")
+    public ResponseEntity<byte[]> exportOrders(
+            @RequestParam(required = false) String orderNo,
+            @RequestParam(required = false) Integer orderType,
+            @RequestParam(required = false) Integer status,
+            @RequestParam(required = false) String buyerName,
+            @RequestParam(required = false) String sellerName,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDateTime startDate,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDateTime endDate) {
+
+        OrderQueryDTO queryDTO = OrderQueryDTO.builder()
+                .orderNo(orderNo)
+                .orderType(orderType)
+                .status(status)
+                .buyerName(buyerName)
+                .sellerName(sellerName)
+                .startDate(startDate)
+                .endDate(endDate)
+                .build();
+
+        byte[] excelData = adminService.exportOrders(queryDTO);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+        headers.setContentDisposition(ContentDisposition.builder("attachment")
+                .filename("orders_" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")) + ".xlsx")
+                .build());
+
+        return new ResponseEntity<>(excelData, headers, HttpStatus.OK);
+    }
+
+    /**
+     * 导出商品列表
+     */
+    @GetMapping("/export/products")
+    public ResponseEntity<byte[]> exportProducts(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) Integer status,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDateTime startDate,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDateTime endDate) {
+
+        byte[] excelData = adminService.exportProducts(keyword, category, status, startDate, endDate);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+        headers.setContentDisposition(ContentDisposition.builder("attachment")
+                .filename("products_" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")) + ".xlsx")
+                .build());
+
+        return new ResponseEntity<>(excelData, headers, HttpStatus.OK);
+    }
+
+    /**
+     * 导出交易统计报表
+     */
+    @GetMapping("/export/statistics")
+    public ResponseEntity<byte[]> exportStatistics(
+            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDateTime startDate,
+            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDateTime endDate) {
+
+        byte[] excelData = adminService.exportStatisticsReport(startDate, endDate);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+        headers.setContentDisposition(ContentDisposition.builder("attachment")
+                .filename("statistics_" + startDate.format(DateTimeFormatter.ofPattern("yyyyMMdd")) +
+                        "_to_" + endDate.format(DateTimeFormatter.ofPattern("yyyyMMdd")) + ".xlsx")
+                .build());
+
+        return new ResponseEntity<>(excelData, headers, HttpStatus.OK);
+    }
+
 }

@@ -154,4 +154,65 @@ public interface AdminService {
      * 获取操作日志
      */
     PageInfo<OperationLogVO> getOperationLogs(LogQueryDTO queryDTO);
+
+    // ==================== 数据统计 ====================
+
+    /**
+     * 获取核心数据概览
+     */
+    StatisticsOverviewVO getStatisticsOverview();
+
+    /**
+     * 获取用户统计数据
+     */
+    UserStatisticsVO getUserStatistics(LocalDateTime startDate, LocalDateTime endDate, String groupBy);
+
+    /**
+     * 获取订单统计数据
+     */
+    OrderStatisticsVO getOrderStatistics(LocalDateTime startDate, LocalDateTime endDate, String groupBy);
+
+    /**
+     * 获取交易金额统计
+     */
+    AmountStatisticsVO getAmountStatistics(LocalDateTime startDate, LocalDateTime endDate, String groupBy);
+
+    /**
+     * 获取商品统计数据
+     */
+    ProductStatisticsVO getProductStatistics(LocalDateTime startDate, LocalDateTime endDate);
+
+    /**
+     * 获取信用分分布统计
+     */
+    CreditStatisticsVO getCreditStatistics();
+
+    /**
+     * 获取热门分类统计
+     */
+    List<CategoryStatVO> getCategoryStatistics(Integer limit);
+
+// ==================== 数据导出 ====================
+
+    /**
+     * 导出用户列表
+     */
+    byte[] exportUsers(UserQueryDTO queryDTO);
+
+    /**
+     * 导出订单列表
+     */
+    byte[] exportOrders(OrderQueryDTO queryDTO);
+
+    /**
+     * 导出商品列表
+     */
+    byte[] exportProducts(String keyword, String category, Integer status,
+                          LocalDateTime startDate, LocalDateTime endDate);
+
+    /**
+     * 导出统计报表
+     */
+    byte[] exportStatisticsReport(LocalDateTime startDate, LocalDateTime endDate);
+
 }

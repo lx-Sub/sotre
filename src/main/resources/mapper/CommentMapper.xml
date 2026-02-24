@@ -128,4 +128,8 @@
         DELETE FROM comment WHERE post_id = #{postId}
     </delete>
 
+    <!-- 统计所有评论数 -->
+    <select id="countAll" resultType="int">
+        SELECT COUNT(*) FROM comment
+    </select>
 </mapper>
