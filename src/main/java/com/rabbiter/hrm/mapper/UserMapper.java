@@ -11,7 +11,10 @@ import com.rabbiter.hrm.dto.UserQueryDTO;
 import com.rabbiter.hrm.entity.User;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 @Mapper
 public interface UserMapper {
@@ -29,8 +32,6 @@ public interface UserMapper {
     int update(User user);
 
     int updateStatus(@Param("id") Long id, @Param("status") Integer status);
-
-    int updateCreditScore(@Param("id") Long id, @Param("score") Integer score);
 
     /**
      * 根据条件查询用户（用于信用分列表）
@@ -51,4 +52,55 @@ public interface UserMapper {
      */
     void batchUpdateStatus(@Param("userIds") List<Long> userIds,
                            @Param("status") Integer status);
+
+    // 在 UserMapper.java 中添加以下方法
+
+    /**
+     * 根据条件统计用户数量
+     */
+    int countByCondition(@Param("keyword") String keyword,
+                         @Param("role") Integer role,
+                         @Param("status") Integer status);
+
+    /**
+     * 更新用户信用分
+     */
+    void updateCreditScore(@Param("id") Long id, @Param("score") Integer score);
+
+    /**
+     * 更新商家状态
+     */
+    void updateMerchantStatus(@Param("id") Long id,
+                              @Param("merchantStatus") Integer merchantStatus,
+                              @Param("consignmentEnabled") Boolean consignmentEnabled,
+                              @Param("consignmentExpiry") LocalDateTime consignmentExpiry);
+
+    /**
+     * 更新最后登录信息
+     */
+    void updateLastLogin(@Param("id") Long id,
+                         @Param("lastLoginTime") LocalDateTime lastLoginTime,
+                         @Param("lastLoginIp") String lastLoginIp);
+
+    /**
+     * 批量冻结用户
+     */
+    int batchFreezeUsers(@Param("userIds") List<Long> userIds,
+                         @Param("reason") String reason);
+
+    /**
+     * 统计用户状态分布
+     */
+    List<Map<String, Object>> statisticsByStatus();
+
+    /**
+     * 统计用户角色分布
+     */
+    List<Map<String, Object>> statisticsByRole();
+
+    /**
+     * 统计每日注册量
+     */
+    List<Map<String, Object>> statisticsByDay(@Param("startDate") LocalDateTime startDate,
+                                              @Param("endDate") LocalDateTime endDate);
 }

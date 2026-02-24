@@ -13,6 +13,7 @@ public enum BusinessStatusEnum implements BaseEnum<T> {
     DATA_IMPORT_ERROR(1000, "数据导入失败"),
     BATCH_DELETE_ERROR(1100, "批量删除失败"),
     STAFF_NOT_EXIST(1200,"没有此员工，请重新登录"),
+    USER_EXISTS(1201, "员工不存在"),
     STAFF_STATUS_ERROR(1300, "状态异常，请联系管理员"),
     STAFF_NOT_TOKEN_ERROR(1400, "取不到token"),
     SUCCESS(200, "success"),

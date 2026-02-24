@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rabbiter.hrm.mapper.AfterSaleMapper">
+
+    <resultMap id="BaseResultMap" type="com.rabbiter.hrm.entity.AfterSale">
+        <id column="id" property="id"/>
+        <result column="after_sale_no" property="afterSaleNo"/>
+        <result column="order_id" property="orderId"/>
+        <result column="exchange_order_id" property="exchangeOrderId"/>
+        <result column="user_id" property="userId"/>
+        <result column="type" property="type"/>
+        <result column="reason" property="reason"/>
+        <result column="amount" property="amount"/>
+        <result column="status" property="status"/>
+        <result column="evidence_images" property="evidenceImages"/>
+        <result column="seller_response" property="sellerResponse"/>
+        <result column="arbitration_result" property="arbitrationResult"/>
+        <result column="arbitration_time" property="arbitrationTime"/>
+        <result column="complete_time" property="completeTime"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, after_sale_no, order_id, exchange_order_id, user_id, type, reason,
+        amount, status, evidence_images, seller_response, arbitration_result,
+        arbitration_time, complete_time, create_time, update_time
+    </sql>
+
+    <!-- 根据ID查询 -->
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM after_sale
+        WHERE id = #{id}
+    </select>
+
+    <!-- 根据售后单号查询 -->
+    <select id="selectByAfterSaleNo" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM after_sale
+        WHERE after_sale_no = #{afterSaleNo}
+    </select>
+
+    <!-- 根据订单ID查询 -->
+    <select id="selectByOrderId" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM after_sale
+        WHERE order_id = #{orderId}
+        ORDER BY create_time DESC
+        LIMIT 1
+    </select>
+
+    <!-- 根据交换订单ID查询 -->
+    <select id="selectByExchangeOrderId" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM after_sale
+        WHERE exchange_order_id = #{exchangeOrderId}
+        ORDER BY create_time DESC
+        LIMIT 1
+    </select>
+
+    <!-- 根据用户ID查询 -->
+    <select id="selectByUserId" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM after_sale
+        WHERE user_id = #{userId}
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 根据状态查询 -->
+    <select id="selectByStatus" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM after_sale
+        <where>
+            <if test="status != null">
+                status = #{status}
+            </if>
+            <if test="status == null">
+                status IN (0, 3)  <!-- 待处理和仲裁中 -->
+            </if>
+        </where>
+        ORDER BY
+        CASE
+        WHEN status = 0 THEN 0
+        WHEN status = 3 THEN 1
+        ELSE 2
+        END,
+        create_time ASC
+    </select>
+
+    <!-- 根据条件查询 -->
+    <select id="selectByCondition" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM after_sale
+        <where>
+            <if test="status != null">
+                AND status = #{status}
+            </if>
+            <if test="type != null">
+                AND type = #{type}
+            </if>
+            <if test="userId != null">
+                AND user_id = #{userId}
+            </if>
+            <if test="startDate != null">
+                AND create_time >= #{startDate}
+            </if>
+            <if test="endDate != null">
+                AND create_time &lt;= #{endDate}
+            </if>
+        </where>
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 查询待处理售后 -->
+    <select id="selectPending" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM after_sale
+        WHERE status IN (0, 3)
+        ORDER BY
+        CASE WHEN status = 0 THEN 0 ELSE 1 END,
+        create_time ASC
+    </select>
+
+    <!-- 查询所有 -->
+    <select id="selectAll" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM after_sale
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 插入 -->
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO after_sale (
+            after_sale_no, order_id, exchange_order_id, user_id, type, reason,
+            amount, status, evidence_images, create_time
+        ) VALUES (
+            #{afterSaleNo}, #{orderId}, #{exchangeOrderId}, #{userId}, #{type},
+            #{reason}, #{amount}, #{status}, #{evidenceImages}, NOW()
+        )
+    </insert>
+
+    <!-- 更新 -->
+    <update id="updateById">
+        UPDATE after_sale
+        <set>
+            <if test="status != null">status = #{status},</if>
+            <if test="sellerResponse != null">seller_response = #{sellerResponse},</if>
+            <if test="arbitrationResult != null">arbitration_result = #{arbitrationResult},</if>
+            <if test="arbitrationTime != null">arbitration_time = #{arbitrationTime},</if>
+            <if test="completeTime != null">complete_time = #{completeTime},</if>
+            update_time = NOW()
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <!-- 更新状态 -->
+    <update id="updateStatus">
+        UPDATE after_sale
+        SET status = #{status},
+        <if test="arbitrationResult != null">
+            arbitration_result = #{arbitrationResult},
+            arbitration_time = NOW(),
+        </if>
+        update_time = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <!-- 更新卖家响应 -->
+    <update id="updateSellerResponse">
+        UPDATE after_sale
+        SET seller_response = #{sellerResponse},
+            update_time = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <!-- 完成售后 -->
+    <update id="completeAfterSale">
+        UPDATE after_sale
+        SET status = 4,
+            complete_time = #{completeTime},
+            update_time = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <!-- 统计待处理售后数 -->
+    <select id="countPending" resultType="int">
+        SELECT COUNT(*) FROM after_sale WHERE status IN (0, 3)
+    </select>
+
+    <!-- 统计用户售后数 -->
+    <select id="countByUserId" resultType="int">
+        SELECT COUNT(*) FROM after_sale WHERE user_id = #{userId}
+    </select>
+
+    <!-- 删除 -->
+    <delete id="deleteById">
+        DELETE FROM after_sale WHERE id = #{id}
+    </delete>
+
+</mapper>

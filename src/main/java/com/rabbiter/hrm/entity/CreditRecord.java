@@ -5,6 +5,8 @@ import java.time.LocalDateTime;
 
 /**
  * 信用记录实体类
+ * @author 李鑫
+ * @date 2026/2/24
  */
 @Data
 public class CreditRecord {
@@ -40,12 +42,12 @@ public class CreditRecord {
     private String reason;
 
     /**
-     * 变更类型：violation-违规 appeal-申诉 manual-手动调整
+     * 类型：violation-违规 appeal-申诉 manual-手动调整 arbitration-仲裁
      */
     private String type;
 
     /**
-     * 关联的业务ID（订单ID、申诉ID等）
+     * 关联业务ID（订单ID、申诉ID等）
      */
     private Long businessId;
 

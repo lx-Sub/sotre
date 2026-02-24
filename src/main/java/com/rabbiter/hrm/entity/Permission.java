@@ -5,6 +5,8 @@ import java.time.LocalDateTime;
 
 /**
  * 权限实体类
+ * @author 李鑫
+ * @date 2026/2/24
  */
 @Data
 public class Permission {

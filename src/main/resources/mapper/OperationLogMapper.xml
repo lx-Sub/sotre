@@ -23,54 +23,161 @@
         details, result, reason, ip_address, user_agent, create_time
     </sql>
 
-    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO operation_log (
-            operator_id, operator_name, operation, target_id, target_type,
-            details, result, reason, ip_address, user_agent, create_time
-        ) VALUES (
-            #{operatorId}, #{operatorName}, #{operation}, #{targetId}, #{targetType},
-            #{details}, #{result}, #{reason}, #{ipAddress}, #{userAgent}, #{createTime}
-        )
-    </insert>
-
+    <!-- 根据ID查询 -->
     <select id="selectById" resultMap="BaseResultMap">
         SELECT <include refid="Base_Column_List"/>
         FROM operation_log
         WHERE id = #{id}
     </select>
 
-    <select id="selectList" resultMap="BaseResultMap">
+    <!-- 根据操作人ID查询 -->
+    <select id="selectByOperatorId" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM operation_log
+        WHERE operator_id = #{operatorId}
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 根据目标查询 -->
+    <select id="selectByTarget" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM operation_log
+        WHERE target_id = #{targetId} AND target_type = #{targetType}
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 根据条件查询 -->
+    <!-- 根据条件查询操作日志 -->
+    <select id="selectByCondition" resultMap="BaseResultMap">
         SELECT <include refid="Base_Column_List"/>
         FROM operation_log
         <where>
             <if test="operatorId != null">
                 AND operator_id = #{operatorId}
             </if>
+            <if test="operation != null and operation != ''">
+                AND operation = #{operation}
+            </if>
             <if test="targetType != null and targetType != ''">
                 AND target_type = #{targetType}
             </if>
-            <if test="startTime != null and startTime != ''">
-                AND create_time >= #{startTime}
+            <if test="startDate != null">
+                AND create_time >= #{startDate}
             </if>
-            <if test="endTime != null and endTime != ''">
-                AND create_time &lt;= #{endTime}
+            <if test="endDate != null">
+                AND create_time &lt;= #{endDate}
             </if>
         </where>
         ORDER BY create_time DESC
     </select>
 
-    <select id="selectByUserId" resultMap="BaseResultMap">
-        SELECT <include refid="Base_Column_List"/>
+    <!-- 查询操作类型统计 -->
+    <select id="statisticsByOperation" resultType="java.util.Map">
+        SELECT
+        operation,
+        COUNT(*) as count
         FROM operation_log
-        WHERE operator_id = #{userId}
-        ORDER BY create_time DESC
+        <where>
+            <if test="startDate != null">
+                AND create_time >= #{startDate}
+            </if>
+            <if test="endDate != null">
+                AND create_time &lt;= #{endDate}
+            </if>
+        </where>
+        GROUP BY operation
+        ORDER BY count DESC
     </select>
 
-    <select id="selectByTarget" resultMap="BaseResultMap">
-        SELECT <include refid="Base_Column_List"/>
+    <!-- 查询操作人统计 -->
+    <select id="statisticsByOperator" resultType="java.util.Map">
+        SELECT
+        operator_id,
+        operator_name,
+        COUNT(*) as count
         FROM operation_log
-        WHERE target_id = #{targetId} AND target_type = #{targetType}
-        ORDER BY create_time DESC
+        <where>
+            <if test="startDate != null">
+                AND create_time >= #{startDate}
+            </if>
+            <if test="endDate != null">
+                AND create_time &lt;= #{endDate}
+            </if>
+        </where>
+        GROUP BY operator_id, operator_name
+        ORDER BY count DESC
+    </select>
+
+    <!-- 查询每日操作量 -->
+    <select id="statisticsByDay" resultType="java.util.Map">
+        SELECT
+        DATE(create_time) as date,
+        COUNT(*) as count
+        FROM operation_log
+        <where>
+            <if test="startDate != null">
+                AND create_time >= #{startDate}
+            </if>
+            <if test="endDate != null">
+                AND create_time &lt;= #{endDate}
+            </if>
+        </where>
+        GROUP BY DATE(create_time)
+        ORDER BY date DESC
+    </select>
+
+    <!-- 插入 -->
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO operation_log (
+            operator_id, operator_name, operation, target_id, target_type,
+            details, result, reason, ip_address, user_agent, create_time
+        ) VALUES (
+            #{operatorId}, #{operatorName}, #{operation}, #{targetId}, #{targetType},
+            #{details}, #{result}, #{reason}, #{ipAddress}, #{userAgent}, NOW()
+        )
+    </insert>
+
+    <!-- 批量插入 -->
+    <insert id="batchInsert">
+        INSERT INTO operation_log (
+        operator_id, operator_name, operation, target_id, target_type,
+        details, result, reason, ip_address, user_agent, create_time
+        ) VALUES
+        <foreach collection="list" item="log" separator=",">
+            (
+            #{log.operatorId}, #{log.operatorName}, #{log.operation},
+            #{log.targetId}, #{log.targetType}, #{log.details}, #{log.result},
+            #{log.reason}, #{log.ipAddress}, #{log.userAgent}, NOW()
+            )
+        </foreach>
+    </insert>
+
+    <!-- 删除旧日志 -->
+    <delete id="deleteOldLogs">
+        DELETE FROM operation_log
+        WHERE create_time &lt; #{beforeDate}
+    </delete>
+
+    <!-- 统计日志数量 -->
+    <select id="countByCondition" resultType="int">
+        SELECT COUNT(*) FROM operation_log
+        <where>
+            <if test="operatorId != null">
+                AND operator_id = #{operatorId}
+            </if>
+            <if test="operation != null and operation != ''">
+                AND operation = #{operation}
+            </if>
+            <if test="targetType != null and targetType != ''">
+                AND target_type = #{targetType}
+            </if>
+            <if test="startDate != null">
+                AND create_time >= #{startDate}
+            </if>
+            <if test="endDate != null">
+                AND create_time &lt;= #{endDate}
+            </if>
+        </where>
     </select>
 
 </mapper>

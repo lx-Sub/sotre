@@ -187,4 +187,95 @@
         </foreach>
     </update>
 
+
+    <!-- 在 UserMapper.xml 中添加以下内容 -->
+
+    <!-- 根据条件统计用户数量 -->
+    <select id="countByCondition" resultType="int">
+        SELECT COUNT(*) FROM user
+        <where>
+            <if test="keyword != null and keyword != ''">
+                AND (username LIKE CONCAT('%', #{keyword}, '%')
+                OR nickname LIKE CONCAT('%', #{keyword}, '%')
+                OR phone LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+            <if test="role != null">
+                AND role = #{role}
+            </if>
+            <if test="status != null">
+                AND status = #{status}
+            </if>
+        </where>
+    </select>
+
+    <!-- 更新用户信用分 -->
+    <update id="updateCreditScore">
+    UPDATE user
+    SET credit_score = #{score}
+    WHERE id = #{id}
+</update>
+
+    <!-- 更新商家状态 -->
+    <update id="updateMerchantStatus">
+    UPDATE user
+    SET merchant_status = #{merchantStatus},
+        consignment_enabled = #{consignmentEnabled},
+        consignment_expiry = #{consignmentExpiry}
+    WHERE id = #{id}
+</update>
+
+    <!-- 更新最后登录信息 -->
+    <update id="updateLastLogin">
+    UPDATE user
+    SET last_login_time = #{lastLoginTime},
+        last_login_ip = #{lastLoginIp}
+    WHERE id = #{id}
+</update>
+
+    <!-- 批量冻结用户 -->
+    <update id="batchFreezeUsers">
+        UPDATE user
+        SET status = 0
+        WHERE id IN
+        <foreach collection="userIds" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
+
+    <!-- 统计用户状态分布 -->
+    <select id="statisticsByStatus" resultType="java.util.Map">
+    SELECT
+        status,
+        COUNT(*) as count
+    FROM user
+    GROUP BY status
+</select>
+
+    <!-- 统计用户角色分布 -->
+    <select id="statisticsByRole" resultType="java.util.Map">
+    SELECT
+        role,
+        COUNT(*) as count
+    FROM user
+    GROUP BY role
+</select>
+
+    <!-- 统计每日注册量 -->
+    <select id="statisticsByDay" resultType="java.util.Map">
+        SELECT
+        DATE(create_time) as date,
+        COUNT(*) as count
+        FROM user
+        <where>
+            <if test="startDate != null">
+                AND create_time >= #{startDate}
+            </if>
+            <if test="endDate != null">
+                AND create_time &lt;= #{endDate}
+            </if>
+        </where>
+        GROUP BY DATE(create_time)
+        ORDER BY date DESC
+    </select>
+
 </mapper>

@@ -1,5 +1,6 @@
 package com.rabbiter.hrm.mapper;
 
+import com.rabbiter.hrm.dto.OrderQueryDTO;
 import com.rabbiter.hrm.entity.Order;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -52,4 +53,11 @@ public interface OrderMapper {
      * 统计今日交易额
      */
     Double sumTodayAmount();
+
+    /**
+     * 根据条件查询订单（用于管理员列表）
+     * @param queryDTO 查询条件
+     * @return 订单列表
+     */
+    List<Order> selectByCondition(OrderQueryDTO queryDTO);
 }

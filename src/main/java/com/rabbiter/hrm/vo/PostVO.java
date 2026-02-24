@@ -1,15 +1,15 @@
-package com.rabbiter.hrm.entity;
+package com.rabbiter.hrm.vo;
 
 import lombok.Data;
 import java.time.LocalDateTime;
 
 /**
- * 帖子实体类
+ * 帖子视图对象
  * @author 李鑫
  * @date 2026/2/24
  */
 @Data
-public class Post {
+public class PostVO {
 
     /**
      * 帖子ID
@@ -22,19 +22,24 @@ public class Post {
     private Long userId;
 
     /**
+     * 用户名
+     */
+    private String username;
+
+    /**
+     * 用户昵称
+     */
+    private String nickname;
+
+    /**
      * 帖子标题
      */
     private String title;
 
     /**
-     * 帖子内容
+     * 帖子内容（摘要）
      */
-    private String content;
-
-    /**
-     * 帖子图片（JSON数组）
-     */
-    private String images;
+    private String summary;
 
     /**
      * 板块分类
@@ -57,29 +62,24 @@ public class Post {
     private Integer commentCount;
 
     /**
-     * 是否加精：0-否 1-是
+     * 是否加精
      */
     private Boolean isEssence;
 
     /**
-     * 是否置顶：0-否 1-是
+     * 是否置顶
      */
     private Boolean isTop;
 
     /**
-     * 状态：0-待审核 1-已发布 2-已屏蔽 3-已删除
+     * 状态：0-待审核 1-已发布 2-已屏蔽
      */
     private Integer status;
 
     /**
-     * 审核备注
+     * 状态名称
      */
-    private String auditRemark;
-
-    /**
-     * 审核时间
-     */
-    private LocalDateTime auditTime;
+    private String statusName;
 
     /**
      * 创建时间
@@ -87,7 +87,15 @@ public class Post {
     private LocalDateTime createTime;
 
     /**
-     * 更新时间
+     * 获取状态名称
      */
-    private LocalDateTime updateTime;
+    public String getStatusName() {
+        if (status == null) return "未知";
+        switch (status) {
+            case 0: return "待审核";
+            case 1: return "已发布";
+            case 2: return "已屏蔽";
+            default: return "未知";
+        }
+    }
 }

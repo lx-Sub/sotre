@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rabbiter.hrm.mapper.CommentMapper">
+
+    <resultMap id="BaseResultMap" type="com.rabbiter.hrm.entity.Comment">
+        <id column="id" property="id"/>
+        <result column="post_id" property="postId"/>
+        <result column="user_id" property="userId"/>
+        <result column="parent_id" property="parentId"/>
+        <result column="reply_to_user_id" property="replyToUserId"/>
+        <result column="content" property="content"/>
+        <result column="status" property="status"/>
+        <result column="like_count" property="likeCount"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, post_id, user_id, parent_id, reply_to_user_id, content,
+        status, like_count, create_time, update_time
+    </sql>
+
+    <!-- 根据ID查询 -->
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM comment
+        WHERE id = #{id}
+    </select>
+
+    <!-- 根据帖子ID查询 -->
+    <select id="selectByPostId" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM comment
+        WHERE post_id = #{postId}
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 根据用户ID查询 -->
+    <select id="selectByUserId" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM comment
+        WHERE user_id = #{userId}
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 根据条件查询 -->
+    <select id="selectByCondition" resultMap="BaseResultMap">
+        SELECT c.*, p.title as post_title, u.username
+        FROM comment c
+        LEFT JOIN post p ON c.post_id = p.id
+        LEFT JOIN user u ON c.user_id = u.id
+        <where>
+            <if test="postId != null">
+                AND c.post_id = #{postId}
+            </if>
+            <if test="status != null">
+                AND c.status = #{status}
+            </if>
+        </where>
+        ORDER BY c.create_time DESC
+    </select>
+
+    <!-- 查询所有 -->
+    <select id="selectAll" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM comment
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 插入 -->
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO comment (
+            post_id, user_id, parent_id, reply_to_user_id, content,
+            status, like_count, create_time
+        ) VALUES (
+            #{postId}, #{userId}, #{parentId}, #{replyToUserId}, #{content},
+            #{status}, #{likeCount}, NOW()
+        )
+    </insert>
+
+    <!-- 更新 -->
+    <update id="updateById">
+        UPDATE comment
+        <set>
+            <if test="content != null">content = #{content},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="likeCount != null">like_count = #{likeCount},</if>
+            update_time = NOW()
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <!-- 更新状态 -->
+    <update id="updateStatus">
+        UPDATE comment
+        SET status = #{status},
+            update_time = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <!-- 增加点赞次数 -->
+    <update id="incrementLikeCount">
+        UPDATE comment
+        SET like_count = like_count + 1
+        WHERE id = #{id}
+    </update>
+
+    <!-- 统计帖子评论数 -->
+    <select id="countByPostId" resultType="int">
+        SELECT COUNT(*) FROM comment
+        WHERE post_id = #{postId} AND status = 0
+    </select>
+
+    <!-- 统计用户评论数 -->
+    <select id="countByUserId" resultType="int">
+        SELECT COUNT(*) FROM comment
+        WHERE user_id = #{userId}
+    </select>
+
+    <!-- 删除 -->
+    <delete id="deleteById">
+        DELETE FROM comment WHERE id = #{id}
+    </delete>
+
+    <!-- 根据帖子ID删除 -->
+    <delete id="deleteByPostId">
+        DELETE FROM comment WHERE post_id = #{postId}
+    </delete>
+
+</mapper>

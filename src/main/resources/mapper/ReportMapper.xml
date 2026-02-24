@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rabbiter.hrm.mapper.ReportMapper">
+
+    <resultMap id="BaseResultMap" type="com.rabbiter.hrm.entity.Report">
+        <id column="id" property="id"/>
+        <result column="reporter_id" property="reporterId"/>
+        <result column="reported_user_id" property="reportedUserId"/>
+        <result column="target_type" property="targetType"/>
+        <result column="target_id" property="targetId"/>
+        <result column="reason" property="reason"/>
+        <result column="description" property="description"/>
+        <result column="evidence_images" property="evidenceImages"/>
+        <result column="status" property="status"/>
+        <result column="handle_result" property="handleResult"/>
+        <result column="handle_time" property="handleTime"/>
+        <result column="handler_id" property="handlerId"/>
+        <result column="create_time" property="createTime"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, reporter_id, reported_user_id, target_type, target_id, reason,
+        description, evidence_images, status, handle_result, handle_time,
+        handler_id, create_time
+    </sql>
+
+    <!-- 根据ID查询 -->
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM report
+        WHERE id = #{id}
+    </select>
+
+    <!-- 根据举报人ID查询 -->
+    <select id="selectByReporterId" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM report
+        WHERE reporter_id = #{reporterId}
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 根据被举报人ID查询 -->
+    <select id="selectByReportedUserId" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM report
+        WHERE reported_user_id = #{reportedUserId}
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 根据目标查询 -->
+    <select id="selectByTarget" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM report
+        WHERE target_type = #{targetType} AND target_id = #{targetId}
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 根据条件查询 -->
+    <select id="selectByCondition" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM report
+        <where>
+            <if test="status != null">
+                AND status = #{status}
+            </if>
+            <if test="targetType != null">
+                AND target_type = #{targetType}
+            </if>
+            <if test="reporterId != null">
+                AND reporter_id = #{reporterId}
+            </if>
+            <if test="reportedUserId != null">
+                AND reported_user_id = #{reportedUserId}
+            </if>
+        </where>
+        ORDER BY
+        CASE WHEN status = 0 THEN 0 ELSE 1 END,
+        create_time DESC
+    </select>
+
+    <!-- 查询待处理举报 -->
+    <select id="selectPending" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM report
+        WHERE status = 0
+        ORDER BY create_time ASC
+    </select>
+
+    <!-- 查询所有 -->
+    <select id="selectAll" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM report
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 插入 -->
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO report (
+            reporter_id, reported_user_id, target_type, target_id, reason,
+            description, evidence_images, status, create_time
+        ) VALUES (
+            #{reporterId}, #{reportedUserId}, #{targetType}, #{targetId},
+            #{reason}, #{description}, #{evidenceImages}, #{status}, NOW()
+        )
+    </insert>
+
+    <!-- 更新 -->
+    <update id="updateById">
+        UPDATE report
+        <set>
+            <if test="status != null">status = #{status},</if>
+            <if test="handleResult != null">handle_result = #{handleResult},</if>
+            <if test="handleTime != null">handle_time = #{handleTime},</if>
+            <if test="handlerId != null">handler_id = #{handlerId},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <!-- 更新状态 -->
+    <update id="updateStatus">
+        UPDATE report
+        SET status = #{status},
+            handle_result = #{handleResult},
+            handle_time = NOW(),
+            handler_id = #{handlerId}
+        WHERE id = #{id}
+    </update>
+
+    <!-- 统计待处理举报数 -->
+    <select id="countPending" resultType="int">
+        SELECT COUNT(*) FROM report WHERE status = 0
+    </select>
+
+    <!-- 统计用户被举报次数 -->
+    <select id="countByReportedUser" resultType="int">
+        SELECT COUNT(*) FROM report
+        WHERE reported_user_id = #{userId} AND status = 1
+    </select>
+
+    <!-- 删除 -->
+    <delete id="deleteById">
+        DELETE FROM report WHERE id = #{id}
+    </delete>
+
+</mapper>

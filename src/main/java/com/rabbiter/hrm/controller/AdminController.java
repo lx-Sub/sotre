@@ -256,4 +256,342 @@ public class AdminController {
         adminService.createSubAdmin(createDTO);
         return Response.success("子管理员创建成功");
     }
+
+
+    // ==================== 内容管理 ====================
+
+    /**
+     * 获取帖子列表（待审核/全部）
+     */
+    @GetMapping("/content/posts")
+    public ResponseDTO getPostList(
+            @RequestParam(defaultValue = "1") Integer pageNum,
+            @RequestParam(defaultValue = "10") Integer pageSize,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) Integer status,  // 0-待审核 1-已发布 2-已屏蔽
+            @RequestParam(required = false) String category) {
+
+        PageInfo<PostVO> pageInfo = adminService.getPostList(pageNum, pageSize, keyword, status, category);
+        return Response.success(pageInfo);
+    }
+
+    /**
+     * 审核帖子
+     */
+    @PutMapping("/content/posts/{id}/audit")
+    public ResponseDTO auditPost(@PathVariable Long id,
+                                 @RequestParam Integer status,  // 1-通过 2-屏蔽
+                                 @RequestParam(required = false) String reason) {
+        adminService.auditPost(id, status, reason);
+        String message = status == 1 ? "帖子已通过" : "帖子已屏蔽";
+        return Response.success(message);
+    }
+
+    /**
+     * 帖子加精/取消加精
+     */
+    @PutMapping("/content/posts/{id}/essence")
+    public ResponseDTO setPostEssence(@PathVariable Long id,
+                                      @RequestParam Boolean isEssence) {
+        adminService.setPostEssence(id, isEssence);
+        return Response.success(isEssence ? "已设为精华" : "已取消精华");
+    }
+
+    /**
+     * 帖子置顶/取消置顶
+     */
+    @PutMapping("/content/posts/{id}/top")
+    public ResponseDTO setPostTop(@PathVariable Long id,
+                                  @RequestParam Boolean isTop) {
+        adminService.setPostTop(id, isTop);
+        return Response.success(isTop ? "已置顶" : "已取消置顶");
+    }
+
+    /**
+     * 获取评论列表
+     */
+    @GetMapping("/content/comments")
+    public ResponseDTO getCommentList(
+            @RequestParam(defaultValue = "1") Integer pageNum,
+            @RequestParam(defaultValue = "10") Integer pageSize,
+            @RequestParam(required = false) Long postId,
+            @RequestParam(required = false) Integer status) {
+
+        PageInfo<CommentVO> pageInfo = adminService.getCommentList(pageNum, pageSize, postId, status);
+        return Response.success(pageInfo);
+    }
+
+    /**
+     * 屏蔽评论
+     */
+    @PutMapping("/content/comments/{id}/block")
+    public ResponseDTO blockComment(@PathVariable Long id,
+                                    @RequestParam String reason) {
+        adminService.blockComment(id, reason);
+        return Response.success("评论已屏蔽");
+    }
+
+    /**
+     * 分区管理 - 获取所有分区
+     */
+    @GetMapping("/content/categories")
+    public ResponseDTO getCategoryList() {
+        List<CategoryVO> categories = adminService.getCategoryList();
+        return Response.success(categories);
+    }
+
+    /**
+     * 新增分区
+     */
+    @PostMapping("/content/categories")
+    public ResponseDTO addCategory(@Valid @RequestBody CategoryDTO categoryDTO) {
+        adminService.addCategory(categoryDTO);
+        return Response.success("分区创建成功");
+    }
+
+    /**
+     * 修改分区
+     */
+    @PutMapping("/content/categories/{id}")
+    public ResponseDTO updateCategory(@PathVariable Long id,
+                                      @Valid @RequestBody CategoryDTO categoryDTO) {
+        categoryDTO.setId(id);
+        adminService.updateCategory(categoryDTO);
+        return Response.success("分区修改成功");
+    }
+
+    /**
+     * 删除分区
+     */
+    @DeleteMapping("/content/categories/{id}")
+    public ResponseDTO deleteCategory(@PathVariable Long id) {
+        adminService.deleteCategory(id);
+        return Response.success("分区删除成功");
+    }
+
+    /**
+     * 商品审核 - 获取待审核商品列表
+     */
+    @GetMapping("/content/products/pending")
+    public ResponseDTO getPendingProducts(
+            @RequestParam(defaultValue = "1") Integer pageNum,
+            @RequestParam(defaultValue = "10") Integer pageSize) {
+
+        PageInfo<ProductVO> pageInfo = adminService.getPendingProducts(pageNum, pageSize);
+        return Response.success(pageInfo);
+    }
+
+    /**
+     * 审核商品
+     */
+    @PutMapping("/content/products/{id}/audit")
+    public ResponseDTO auditProduct(@PathVariable Long id,
+                                    @RequestParam Integer status,  // 1-通过 2-违规下架
+                                    @RequestParam(required = false) String reason) {
+        adminService.auditProduct(id, status, reason);
+        return Response.success(status == 1 ? "商品已通过" : "商品已下架");
+    }
+
+    /**
+     * 违规举报处理 - 获取举报列表
+     */
+    @GetMapping("/content/reports")
+    public ResponseDTO getReportList(
+            @RequestParam(defaultValue = "1") Integer pageNum,
+            @RequestParam(defaultValue = "10") Integer pageSize,
+            @RequestParam(required = false) Integer status,  // 0-待处理 1-已处理 2-驳回
+            @RequestParam(required = false) Integer targetType) {  // 1-帖子 2-评论 3-商品
+
+        PageInfo<ReportVO> pageInfo = adminService.getReportList(pageNum, pageSize, status, targetType);
+        return Response.success(pageInfo);
+    }
+
+    /**
+     * 处理举报
+     */
+    @PostMapping("/content/reports/{id}/handle")
+    public ResponseDTO handleReport(@PathVariable Long id,
+                                    @Valid @RequestBody ReportHandleDTO handleDTO) {
+        handleDTO.setReportId(id);
+        adminService.handleReport(handleDTO);
+        return Response.success("举报已处理");
+    }
+
+    // ==================== 交易管理 ====================
+
+    /**
+     * 获取订单列表（监控）
+     */
+    @GetMapping("/trade/orders")
+    public ResponseDTO getOrderList(
+            @RequestParam(defaultValue = "1") Integer pageNum,
+            @RequestParam(defaultValue = "10") Integer pageSize,
+            @RequestParam(required = false) String orderNo,
+            @RequestParam(required = false) Integer orderType,  // 1-销售 2-交换
+            @RequestParam(required = false) Integer status,
+            @RequestParam(required = false) String buyerName,
+            @RequestParam(required = false) String sellerName,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDateTime startDate,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDateTime endDate) {
+
+        OrderQueryDTO queryDTO = OrderQueryDTO.builder()
+                .pageNum(pageNum)
+                .pageSize(pageSize)
+                .orderNo(orderNo)
+                .orderType(orderType)
+                .status(status)
+                .buyerName(buyerName)
+                .sellerName(sellerName)
+                .startDate(startDate)
+                .endDate(endDate)
+                .build();
+
+        PageInfo<OrderVO> pageInfo = adminService.getOrderList(queryDTO);
+        return Response.success(pageInfo);
+    }
+
+    /**
+     * 获取订单详情
+     */
+    @GetMapping("/trade/orders/{id}")
+    public ResponseDTO getOrderDetail(@PathVariable Long id) {
+        OrderDetailVO orderDetail = adminService.getOrderDetail(id);
+        return Response.success(orderDetail);
+    }
+
+    /**
+     * 获取售后列表
+     */
+    @GetMapping("/trade/after-sales")
+    public ResponseDTO getAfterSaleList(
+            @RequestParam(defaultValue = "1") Integer pageNum,
+            @RequestParam(defaultValue = "10") Integer pageSize,
+            @RequestParam(required = false) Integer status) {  // 0-待处理 3-仲裁中
+
+        PageInfo<AfterSaleVO> pageInfo = adminService.getAfterSaleList(pageNum, pageSize, status);
+        return Response.success(pageInfo);
+    }
+
+    /**
+     * 售后仲裁
+     */
+    @PostMapping("/trade/after-sales/{id}/arbitrate")
+    public ResponseDTO arbitrateAfterSale(@PathVariable Long id,
+                                          @Valid @RequestBody ArbitrationDTO arbitrationDTO) {
+        arbitrationDTO.setAfterSaleId(id);
+        adminService.arbitrateAfterSale(arbitrationDTO);
+        return Response.success("仲裁完成");
+    }
+
+    /**
+     * 获取交换订单列表
+     */
+    @GetMapping("/trade/exchange-orders")
+    public ResponseDTO getExchangeOrderList(
+            @RequestParam(defaultValue = "1") Integer pageNum,
+            @RequestParam(defaultValue = "10") Integer pageSize,
+            @RequestParam(required = false) String exchangeNo,
+            @RequestParam(required = false) Integer status) {
+
+        PageInfo<ExchangeOrderVO> pageInfo = adminService.getExchangeOrderList(pageNum, pageSize, exchangeNo, status);
+        return Response.success(pageInfo);
+    }
+
+    // ==================== 系统管理 ====================
+
+    /**
+     * 获取公告列表
+     */
+    @GetMapping("/system/announcements")
+    public ResponseDTO getAnnouncementList(
+            @RequestParam(defaultValue = "1") Integer pageNum,
+            @RequestParam(defaultValue = "10") Integer pageSize,
+            @RequestParam(required = false) Integer type,
+            @RequestParam(required = false) Integer status) {
+
+        PageInfo<AnnouncementVO> pageInfo = adminService.getAnnouncementList(pageNum, pageSize, type, status);
+        return Response.success(pageInfo);
+    }
+
+    /**
+     * 发布公告
+     */
+    @PostMapping("/system/announcements")
+    public ResponseDTO publishAnnouncement(@Valid @RequestBody AnnouncementDTO announcementDTO) {
+        adminService.publishAnnouncement(announcementDTO);
+        return Response.success("公告发布成功");
+    }
+
+    /**
+     * 修改公告
+     */
+    @PutMapping("/system/announcements/{id}")
+    public ResponseDTO updateAnnouncement(@PathVariable Long id,
+                                          @Valid @RequestBody AnnouncementDTO announcementDTO) {
+        announcementDTO.setId(id);
+        adminService.updateAnnouncement(announcementDTO);
+        return Response.success("公告修改成功");
+    }
+
+    /**
+     * 删除公告
+     */
+    @DeleteMapping("/system/announcements/{id}")
+    public ResponseDTO deleteAnnouncement(@PathVariable Long id) {
+        adminService.deleteAnnouncement(id);
+        return Response.success("公告删除成功");
+    }
+
+    /**
+     * 消息监控 - 获取私信列表
+     */
+    @GetMapping("/system/messages")
+    public ResponseDTO getMessageList(
+            @RequestParam(defaultValue = "1") Integer pageNum,
+            @RequestParam(defaultValue = "10") Integer pageSize,
+            @RequestParam(required = false) Long senderId,
+            @RequestParam(required = false) Long receiverId,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDateTime startDate,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDateTime endDate) {
+
+        PageInfo<PrivateMessageVO> pageInfo = adminService.getMessageList(pageNum, pageSize,
+                senderId, receiverId, startDate, endDate);
+        return Response.success(pageInfo);
+    }
+
+    /**
+     * 查看私信详情
+     */
+    @GetMapping("/system/messages/{id}")
+    public ResponseDTO getMessageDetail(@PathVariable Long id) {
+        PrivateMessageDetailVO messageDetail = adminService.getMessageDetail(id);
+        return Response.success(messageDetail);
+    }
+
+    /**
+     * 获取操作日志
+     */
+    @GetMapping("/system/logs")
+    public ResponseDTO getOperationLogs(
+            @RequestParam(defaultValue = "1") Integer pageNum,
+            @RequestParam(defaultValue = "10") Integer pageSize,
+            @RequestParam(required = false) Long operatorId,
+            @RequestParam(required = false) String operation,
+            @RequestParam(required = false) String targetType,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDateTime startDate,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDateTime endDate) {
+
+        LogQueryDTO queryDTO = LogQueryDTO.builder()
+                .pageNum(pageNum)
+                .pageSize(pageSize)
+                .operatorId(operatorId)
+                .operation(operation)
+                .targetType(targetType)
+                .startDate(startDate)
+                .endDate(endDate)
+                .build();
+
+        PageInfo<OperationLogVO> pageInfo = adminService.getOperationLogs(queryDTO);
+        return Response.success(pageInfo);
+    }
 }

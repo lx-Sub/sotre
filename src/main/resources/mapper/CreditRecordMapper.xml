@@ -104,4 +104,76 @@
         WHERE id = #{id}
     </update>
 
+
+    <!-- 在 CreditRecordMapper.xml 中添加以下内容 -->
+
+    <!-- 统计用户信用分变更趋势 -->
+    <select id="statisticsUserCredit" resultType="java.util.Map">
+        SELECT
+        DATE(create_time) as date,
+        SUM(change_score) as total_change,
+        AVG(after_score) as avg_score
+        FROM credit_record
+        WHERE user_id = #{userId}
+        <if test="startDate != null">
+            AND create_time >= #{startDate}
+        </if>
+        <if test="endDate != null">
+            AND create_time &lt;= #{endDate}
+        </if>
+        GROUP BY DATE(create_time)
+        ORDER BY date DESC
+    </select>
+
+    <!-- 统计信用分变更类型分布 -->
+    <select id="statisticsByType" resultType="java.util.Map">
+        SELECT
+        type,
+        COUNT(*) as count,
+        SUM(change_score) as total_change
+        FROM credit_record
+        <where>
+            <if test="startDate != null">
+                AND create_time >= #{startDate}
+            </if>
+            <if test="endDate != null">
+                AND create_time &lt;= #{endDate}
+            </if>
+        </where>
+        GROUP BY type
+    </select>
+
+    <!-- 查询信用分最低的用户 -->
+    <select id="selectLowestCreditUsers" resultType="com.rabbiter.hrm.entity.User">
+    SELECT * FROM user
+    WHERE status = 1
+    ORDER BY credit_score ASC
+    LIMIT #{limit}
+</select>
+
+    <!-- 根据业务ID查询信用记录 -->
+    <select id="selectByBusinessId" resultMap="CreditRecordResultMap">
+        SELECT <include refid="CreditRecord_Column_List"/>
+        FROM credit_record
+        WHERE business_id = #{businessId}
+        <if test="type != null and type != ''">
+            AND type = #{type}
+        </if>
+    </select>
+
+    <!-- 批量插入 -->
+    <insert id="batchInsert">
+        INSERT INTO credit_record (
+        user_id, change_score, before_score, after_score, reason,
+        type, business_id, operator_id, create_time
+        ) VALUES
+        <foreach collection="list" item="record" separator=",">
+            (
+            #{record.userId}, #{record.changeScore}, #{record.beforeScore},
+            #{record.afterScore}, #{record.reason}, #{record.type},
+            #{record.businessId}, #{record.operatorId}, NOW()
+            )
+        </foreach>
+    </insert>
+
 </mapper>

@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rabbiter.hrm.mapper.ExchangeOrderMapper">
+
+    <resultMap id="BaseResultMap" type="com.rabbiter.hrm.entity.ExchangeOrder">
+        <id column="id" property="id"/>
+        <result column="exchange_no" property="exchangeNo"/>
+        <result column="initiator_id" property="initiatorId"/>
+        <result column="receiver_id" property="receiverId"/>
+        <result column="initiator_product_id" property="initiatorProductId"/>
+        <result column="receiver_product_id" property="receiverProductId"/>
+        <result column="initiator_product_name" property="initiatorProductName"/>
+        <result column="receiver_product_name" property="receiverProductName"/>
+        <result column="price_diff" property="priceDiff"/>
+        <result column="status" property="status"/>
+        <result column="initiator_logistics_no" property="initiatorLogisticsNo"/>
+        <result column="receiver_logistics_no" property="receiverLogisticsNo"/>
+        <result column="initiator_ship_time" property="initiatorShipTime"/>
+        <result column="receiver_ship_time" property="receiverShipTime"/>
+        <result column="initiator_receive_time" property="initiatorReceiveTime"/>
+        <result column="receiver_receive_time" property="receiverReceiveTime"/>
+        <result column="pay_time" property="payTime"/>
+        <result column="complete_time" property="completeTime"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, exchange_no, initiator_id, receiver_id, initiator_product_id,
+        receiver_product_id, initiator_product_name, receiver_product_name,
+        price_diff, status, initiator_logistics_no, receiver_logistics_no,
+        initiator_ship_time, receiver_ship_time, initiator_receive_time,
+        receiver_receive_time, pay_time, complete_time, create_time, update_time
+    </sql>
+
+    <!-- 根据ID查询 -->
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM exchange_order
+        WHERE id = #{id}
+    </select>
+
+    <!-- 根据交换单号查询 -->
+    <select id="selectByExchangeNo" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM exchange_order
+        WHERE exchange_no = #{exchangeNo}
+    </select>
+
+    <!-- 根据条件查询 -->
+    <select id="selectByCondition" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM exchange_order
+        <where>
+            <if test="exchangeNo != null and exchangeNo != ''">
+                AND exchange_no LIKE CONCAT('%', #{exchangeNo}, '%')
+            </if>
+            <if test="status != null">
+                AND status = #{status}
+            </if>
+            <if test="initiatorId != null">
+                AND initiator_id = #{initiatorId}
+            </if>
+            <if test="receiverId != null">
+                AND receiver_id = #{receiverId}
+            </if>
+        </where>
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 根据用户ID查询 -->
+    <select id="selectByUserId" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM exchange_order
+        WHERE initiator_id = #{userId} OR receiver_id = #{userId}
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 根据发起方ID查询 -->
+    <select id="selectByInitiatorId" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM exchange_order
+        WHERE initiator_id = #{initiatorId}
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 根据接收方ID查询 -->
+    <select id="selectByReceiverId" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM exchange_order
+        WHERE receiver_id = #{receiverId}
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 查询待处理的交换订单 -->
+    <select id="selectPending" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM exchange_order
+        WHERE status IN (0, 1, 2, 6)  <!-- 待确认、待付款、待发货、仲裁中 -->
+        ORDER BY create_time ASC
+    </select>
+
+    <!-- 查询所有交换订单 -->
+    <select id="selectAll" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM exchange_order
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 插入 -->
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO exchange_order (
+            exchange_no, initiator_id, receiver_id, initiator_product_id,
+            receiver_product_id, initiator_product_name, receiver_product_name,
+            price_diff, status, create_time
+        ) VALUES (
+            #{exchangeNo}, #{initiatorId}, #{receiverId}, #{initiatorProductId},
+            #{receiverProductId}, #{initiatorProductName}, #{receiverProductName},
+            #{priceDiff}, #{status}, NOW()
+        )
+    </insert>
+
+    <!-- 更新 -->
+    <update id="updateById">
+        UPDATE exchange_order
+        <set>
+            <if test="status != null">status = #{status},</if>
+            <if test="initiatorLogisticsNo != null">initiator_logistics_no = #{initiatorLogisticsNo},</if>
+            <if test="receiverLogisticsNo != null">receiver_logistics_no = #{receiverLogisticsNo},</if>
+            <if test="initiatorShipTime != null">initiator_ship_time = #{initiatorShipTime},</if>
+            <if test="receiverShipTime != null">receiver_ship_time = #{receiverShipTime},</if>
+            <if test="initiatorReceiveTime != null">initiator_receive_time = #{initiatorReceiveTime},</if>
+            <if test="receiverReceiveTime != null">receiver_receive_time = #{receiverReceiveTime},</if>
+            <if test="payTime != null">pay_time = #{payTime},</if>
+            <if test="completeTime != null">complete_time = #{completeTime},</if>
+            update_time = NOW()
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <!-- 更新状态 -->
+    <update id="updateStatus">
+        UPDATE exchange_order
+        SET status = #{status},
+            update_time = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <!-- 更新发起方发货信息 -->
+    <update id="updateInitiatorShipping">
+        UPDATE exchange_order
+        SET initiator_logistics_no = #{initiatorLogisticsNo},
+            initiator_ship_time = #{initiatorShipTime},
+            update_time = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <!-- 更新接收方发货信息 -->
+    <update id="updateReceiverShipping">
+        UPDATE exchange_order
+        SET receiver_logistics_no = #{receiverLogisticsNo},
+            receiver_ship_time = #{receiverShipTime},
+            update_time = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <!-- 更新收货信息 -->
+    <update id="updateReceiveInfo">
+        UPDATE exchange_order
+        SET initiator_receive_time = #{initiatorReceiveTime},
+            receiver_receive_time = #{receiverReceiveTime},
+            complete_time = #{completeTime},
+            status = 4,
+            update_time = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <!-- 统计用户交换订单数 -->
+    <select id="countByUserId" resultType="int">
+        SELECT COUNT(*) FROM exchange_order
+        WHERE initiator_id = #{userId} OR receiver_id = #{userId}
+    </select>
+
+    <!-- 统计待处理交换订单数 -->
+    <select id="countPending" resultType="int">
+        SELECT COUNT(*) FROM exchange_order
+        WHERE status IN (0, 1, 2, 6)
+    </select>
+
+    <!-- 删除 -->
+    <delete id="deleteById">
+        DELETE FROM exchange_order WHERE id = #{id}
+    </delete>
+
+</mapper>

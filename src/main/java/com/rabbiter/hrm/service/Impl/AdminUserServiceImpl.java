@@ -1,4 +1,4 @@
-package com.rabbiter.hrm.service.impl;
+package com.rabbiter.hrm.service.Impl;
 
 import com.rabbiter.hrm.dto.*;
 import com.rabbiter.hrm.entity.*;

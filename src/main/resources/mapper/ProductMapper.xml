@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rabbiter.hrm.mapper.ProductMapper">
+
+    <resultMap id="BaseResultMap" type="com.rabbiter.hrm.entity.Product">
+        <id column="id" property="id"/>
+        <result column="user_id" property="userId"/>
+        <result column="user_type" property="userType"/>
+        <result column="name" property="name"/>
+        <result column="description" property="description"/>
+        <result column="price" property="price"/>
+        <result column="stock" property="stock"/>
+        <result column="category" property="category"/>
+        <result column="brand" property="brand"/>
+        <result column="model" property="model"/>
+        <result column="condition" property="condition"/>
+        <result column="images" property="images"/>
+        <result column="trade_type" property="tradeType"/>
+        <result column="status" property="status"/>
+        <result column="audit_remark" property="auditRemark"/>
+        <result column="audit_time" property="auditTime"/>
+        <result column="view_count" property="viewCount"/>
+        <result column="favorite_count" property="favoriteCount"/>
+        <result column="sale_count" property="saleCount"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="shelf_time" property="shelfTime"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, user_id, user_type, name, description, price, stock, category,
+        brand, model, `condition`, images, trade_type, status, audit_remark,
+        audit_time, view_count, favorite_count, sale_count, create_time,
+        update_time, shelf_time
+    </sql>
+
+    <!-- 根据ID查询 -->
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM product
+        WHERE id = #{id}
+    </select>
+
+    <!-- 根据用户ID查询 -->
+    <select id="selectByUserId" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM product
+        WHERE user_id = #{userId}
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 根据状态查询 -->
+    <select id="selectByStatus" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM product
+        WHERE status = #{status}
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 根据条件查询 -->
+    <select id="selectByCondition" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM product
+        <where>
+            <if test="keyword != null and keyword != ''">
+                AND (name LIKE CONCAT('%', #{keyword}, '%')
+                OR description LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+            <if test="category != null and category != ''">
+                AND category = #{category}
+            </if>
+            <if test="status != null">
+                AND status = #{status}
+            </if>
+            <if test="userId != null">
+                AND user_id = #{userId}
+            </if>
+            <if test="minPrice != null">
+                AND price >= #{minPrice}
+            </if>
+            <if test="maxPrice != null">
+                AND price &lt;= #{maxPrice}
+            </if>
+            <if test="tradeType != null">
+                AND trade_type = #{tradeType}
+            </if>
+        </where>
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 查询待审核商品 -->
+    <select id="selectPending" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM product
+        WHERE status = 0
+        ORDER BY create_time ASC
+    </select>
+
+    <!-- 查询上架商品 -->
+    <select id="selectOnSale" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM product
+        WHERE status = 1
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 插入 -->
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO product (
+            user_id, user_type, name, description, price, stock, category,
+            brand, model, `condition`, images, trade_type, status, create_time
+        ) VALUES (
+            #{userId}, #{userType}, #{name}, #{description}, #{price}, #{stock},
+            #{category}, #{brand}, #{model}, #{condition}, #{images},
+            #{tradeType}, #{status}, NOW()
+        )
+    </insert>
+
+    <!-- 更新 -->
+    <update id="updateById">
+        UPDATE product
+        <set>
+            <if test="name != null">name = #{name},</if>
+            <if test="description != null">description = #{description},</if>
+            <if test="price != null">price = #{price},</if>
+            <if test="stock != null">stock = #{stock},</if>
+            <if test="category != null">category = #{category},</if>
+            <if test="brand != null">brand = #{brand},</if>
+            <if test="model != null">model = #{model},</if>
+            <if test="condition != null">`condition` = #{condition},</if>
+            <if test="images != null">images = #{images},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="auditRemark != null">audit_remark = #{auditRemark},</if>
+            <if test="auditTime != null">audit_time = #{auditTime},</if>
+            <if test="shelfTime != null">shelf_time = #{shelfTime},</if>
+            update_time = NOW()
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <!-- 更新状态 -->
+    <update id="updateStatus">
+        UPDATE product
+        SET status = #{status},
+            audit_remark = #{auditRemark},
+            audit_time = NOW(),
+            update_time = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <!-- 更新库存 -->
+    <update id="updateStock">
+        UPDATE product
+        SET stock = #{stock},
+            update_time = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <!-- 增加浏览次数 -->
+    <update id="incrementViewCount">
+        UPDATE product
+        SET view_count = view_count + 1
+        WHERE id = #{id}
+    </update>
+
+    <!-- 增加收藏次数 -->
+    <update id="incrementFavoriteCount">
+        UPDATE product
+        SET favorite_count = favorite_count + 1
+        WHERE id = #{id}
+    </update>
+
+    <!-- 增加销量 -->
+    <update id="incrementSaleCount">
+        UPDATE product
+        SET sale_count = sale_count + #{quantity},
+            stock = stock - #{quantity}
+        WHERE id = #{id}
+    </update>
+
+    <!-- 统计用户商品数 -->
+    <select id="countByUserId" resultType="int">
+        SELECT COUNT(*) FROM product WHERE user_id = #{userId}
+    </select>
+
+    <!-- 统计待审核商品数 -->
+    <select id="countPending" resultType="int">
+        SELECT COUNT(*) FROM product WHERE status = 0
+    </select>
+
+    <!-- 删除 -->
+    <delete id="deleteById">
+        DELETE FROM product WHERE id = #{id}
+    </delete>
+
+</mapper>

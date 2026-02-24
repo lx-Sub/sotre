@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rabbiter.hrm.mapper.AnnouncementMapper">
+
+    <resultMap id="BaseResultMap" type="com.rabbiter.hrm.entity.Announcement">
+        <id column="id" property="id"/>
+        <result column="title" property="title"/>
+        <result column="content" property="content"/>
+        <result column="type" property="type"/>
+        <result column="is_top" property="isTop"/>
+        <result column="status" property="status"/>
+        <result column="publish_time" property="publishTime"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, title, content, type, is_top, status, publish_time, create_time, update_time
+    </sql>
+
+    <!-- 根据ID查询 -->
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM announcement
+        WHERE id = #{id}
+    </select>
+
+    <!-- 根据标题查询 -->
+    <select id="selectByTitle" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM announcement
+        WHERE title LIKE CONCAT('%', #{title}, '%')
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 查询所有 -->
+    <select id="selectAll" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM announcement
+        ORDER BY is_top DESC, publish_time DESC, create_time DESC
+    </select>
+
+    <!-- 根据条件查询 -->
+    <select id="selectByCondition" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM announcement
+        <where>
+            <if test="type != null">
+                AND type = #{type}
+            </if>
+            <if test="status != null">
+                AND status = #{status}
+            </if>
+            <if test="keyword != null and keyword != ''">
+                AND (title LIKE CONCAT('%', #{keyword}, '%')
+                OR content LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+        </where>
+        ORDER BY is_top DESC,
+        CASE
+        WHEN status = 1 THEN 0
+        WHEN status = 0 THEN 1
+        ELSE 2
+        END,
+        publish_time DESC,
+        create_time DESC
+    </select>
+
+    <!-- 查询置顶公告 -->
+    <select id="selectTopAnnouncements" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM announcement
+        WHERE is_top = 1 AND status = 1
+        ORDER BY publish_time DESC
+        LIMIT 5
+    </select>
+
+    <!-- 查询已发布的公告 -->
+    <select id="selectPublished" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM announcement
+        WHERE status = 1
+        ORDER BY is_top DESC, publish_time DESC
+    </select>
+
+    <!-- 插入 -->
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO announcement (
+            title, content, type, is_top, status, publish_time, create_time
+        ) VALUES (
+            #{title}, #{content}, #{type}, #{isTop}, #{status},
+            #{publishTime}, NOW()
+        )
+    </insert>
+
+    <!-- 更新 -->
+    <update id="updateById">
+        UPDATE announcement
+        <set>
+            <if test="title != null">title = #{title},</if>
+            <if test="content != null">content = #{content},</if>
+            <if test="type != null">type = #{type},</if>
+            <if test="isTop != null">is_top = #{isTop},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="publishTime != null">publish_time = #{publishTime},</if>
+            update_time = NOW()
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <!-- 更新状态 -->
+    <update id="updateStatus">
+        UPDATE announcement
+        SET status = #{status},
+            update_time = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <!-- 更新置顶状态 -->
+    <update id="updateTop">
+        UPDATE announcement
+        SET is_top = #{isTop},
+            update_time = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <!-- 发布公告 -->
+    <update id="publish">
+        UPDATE announcement
+        SET status = 1,
+            publish_time = #{publishTime},
+            update_time = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <!-- 删除 -->
+    <delete id="deleteById">
+        DELETE FROM announcement WHERE id = #{id}
+    </delete>
+
+    <!-- 统计公告数量 -->
+    <select id="countByCondition" resultType="int">
+        SELECT COUNT(*) FROM announcement
+        <where>
+            <if test="type != null">
+                AND type = #{type}
+            </if>
+            <if test="status != null">
+                AND status = #{status}
+            </if>
+        </where>
+    </select>
+
+</mapper>

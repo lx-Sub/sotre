@@ -6,93 +6,156 @@
     <resultMap id="BaseResultMap" type="com.rabbiter.hrm.entity.Order">
         <id column="id" property="id"/>
         <result column="order_no" property="orderNo"/>
-        <result column="order_type" property="orderType"/>
-        <result column="user_id" property="userId"/>
-        <result column="other_user_id" property="otherUserId"/>
+        <result column="buyer_id" property="buyerId"/>
+        <result column="seller_id" property="sellerId"/>
+        <result column="seller_type" property="sellerType"/>
         <result column="product_id" property="productId"/>
         <result column="product_name" property="productName"/>
         <result column="product_image" property="productImage"/>
-        <result column="product_count" property="productCount"/>
-        <result column="amount" property="amount"/>
+        <result column="spec_id" property="specId"/>
+        <result column="spec_desc" property="specDesc"/>
+        <result column="price" property="price"/>
+        <result column="quantity" property="quantity"/>
+        <result column="total_amount" property="totalAmount"/>
+        <result column="order_type" property="orderType"/>
         <result column="status" property="status"/>
-        <result column="payment_method" property="paymentMethod"/>
-        <result column="payment_time" property="paymentTime"/>
-        <result column="delivery_time" property="deliveryTime"/>
-        <result column="complete_time" property="completeTime"/>
-        <result column="has_dispute" property="hasDispute"/>
+        <result column="logistics_no" property="logisticsNo"/>
+        <result column="logistics_company" property="logisticsCompany"/>
+        <result column="receiver_name" property="receiverName"/>
+        <result column="receiver_phone" property="receiverPhone"/>
+        <result column="receiver_address" property="receiverAddress"/>
+        <result column="buyer_remark" property="buyerRemark"/>
+        <result column="seller_remark" property="sellerRemark"/>
+        <result column="close_reason" property="closeReason"/>
+        <result column="pay_time" property="payTime"/>
+        <result column="ship_time" property="shipTime"/>
+        <result column="receive_time" property="receiveTime"/>
         <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
     </resultMap>
 
     <sql id="Base_Column_List">
-        id, order_no, order_type, user_id, other_user_id, product_id, product_name,
-        product_image, product_count, amount, status, payment_method, payment_time,
-        delivery_time, complete_time, has_dispute, create_time
+        id, order_no, buyer_id, seller_id, seller_type, product_id, product_name,
+        product_image, spec_id, spec_desc, price, quantity, total_amount,
+        order_type, status, logistics_no, logistics_company, receiver_name,
+        receiver_phone, receiver_address, buyer_remark, seller_remark,
+        close_reason, pay_time, ship_time, receive_time, create_time, update_time
     </sql>
 
+    <!-- 根据ID查询订单 -->
     <select id="selectById" resultMap="BaseResultMap">
         SELECT <include refid="Base_Column_List"/>
-        FROM orders
+        FROM `order`
         WHERE id = #{id}
     </select>
 
+    <!-- 根据订单号查询 -->
     <select id="selectByOrderNo" resultMap="BaseResultMap">
         SELECT <include refid="Base_Column_List"/>
-        FROM orders
+        FROM `order`
         WHERE order_no = #{orderNo}
     </select>
 
+    <!-- 根据用户ID查询订单 -->
     <select id="selectByUserId" resultMap="BaseResultMap">
         SELECT <include refid="Base_Column_List"/>
-        FROM orders
-        WHERE user_id = #{userId} OR other_user_id = #{userId}
+        FROM `order`
+        WHERE buyer_id = #{userId} OR seller_id = #{userId}
         ORDER BY create_time DESC
         LIMIT 10
     </select>
 
+    <!-- 统计用户订单数量 -->
     <select id="countByUserId" resultType="int">
         SELECT COUNT(*)
-        FROM orders
-        WHERE user_id = #{userId} OR other_user_id = #{userId}
+        FROM `order`
+        WHERE buyer_id = #{userId} OR seller_id = #{userId}
     </select>
 
+    <!-- 查询所有订单 -->
     <select id="selectAll" resultMap="BaseResultMap">
         SELECT <include refid="Base_Column_List"/>
-        FROM orders
+        FROM `order`
         ORDER BY create_time DESC
     </select>
 
-    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO orders (
-            order_no, order_type, user_id, other_user_id, product_id,
-            product_name, product_image, product_count, amount, status,
-            payment_method, create_time
-        ) VALUES (
-            #{orderNo}, #{orderType}, #{userId}, #{otherUserId}, #{productId},
-            #{productName}, #{productImage}, #{productCount}, #{amount}, #{status},
-            #{paymentMethod}, #{createTime}
-        )
-    </insert>
+    <!-- 根据条件查询订单（用于管理员列表） -->
+    <select id="selectByCondition" parameterType="com.rabbiter.hrm.dto.OrderQueryDTO"
+            resultMap="BaseResultMap">
+        SELECT o.*,
+        buyer.username as buyer_name,
+        seller.username as seller_name
+        FROM `order` o
+        LEFT JOIN user buyer ON o.buyer_id = buyer.id
+        LEFT JOIN user seller ON o.seller_id = seller.id
+        <where>
+            <if test="orderNo != null and orderNo != ''">
+                AND o.order_no LIKE CONCAT('%', #{orderNo}, '%')
+            </if>
+            <if test="orderType != null">
+                AND o.order_type = #{orderType}
+            </if>
+            <if test="status != null">
+                AND o.status = #{status}
+            </if>
+            <if test="buyerName != null and buyerName != ''">
+                AND buyer.username LIKE CONCAT('%', #{buyerName}, '%')
+            </if>
+            <if test="sellerName != null and sellerName != ''">
+                AND seller.username LIKE CONCAT('%', #{sellerName}, '%')
+            </if>
+            <if test="startDate != null">
+                AND o.create_time >= #{startDate}
+            </if>
+            <if test="endDate != null">
+                AND o.create_time &lt;= #{endDate}
+            </if>
+        </where>
+        ORDER BY o.create_time DESC
+    </select>
 
-    <update id="updateById">
-        UPDATE orders
-        <set>
-            <if test="status != null">status = #{status},</if>
-            <if test="paymentTime != null">payment_time = #{paymentTime},</if>
-            <if test="deliveryTime != null">delivery_time = #{deliveryTime},</if>
-            <if test="completeTime != null">complete_time = #{completeTime},</if>
-            <if test="hasDispute != null">has_dispute = #{hasDispute},</if>
-        </set>
-        WHERE id = #{id}
-    </update>
-
+    <!-- 统计今日订单数 -->
     <select id="countToday" resultType="int">
-        SELECT COUNT(*) FROM orders
+        SELECT COUNT(*) FROM `order`
         WHERE DATE(create_time) = CURDATE()
     </select>
 
+    <!-- 统计今日交易额 -->
     <select id="sumTodayAmount" resultType="double">
-        SELECT COALESCE(SUM(amount), 0) FROM orders
+        SELECT COALESCE(SUM(amount), 0) FROM `order`
         WHERE DATE(create_time) = CURDATE() AND status = 3
     </select>
+
+    <!-- 插入订单 -->
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO `order` (
+            order_no, order_type, buyer_id, seller_id, seller_type, product_id,
+            product_name, product_image, spec_id, spec_desc, price, quantity,
+            total_amount, status, receiver_name, receiver_phone, receiver_address,
+            buyer_remark, create_time
+        ) VALUES (
+            #{orderNo}, #{orderType}, #{buyerId}, #{sellerId}, #{sellerType}, #{productId},
+            #{productName}, #{productImage}, #{specId}, #{specDesc}, #{price}, #{quantity},
+            #{totalAmount}, #{status}, #{receiverName}, #{receiverPhone}, #{receiverAddress},
+            #{buyerRemark}, NOW()
+        )
+    </insert>
+
+    <!-- 更新订单 -->
+    <update id="updateById">
+        UPDATE `order`
+        <set>
+            <if test="status != null">status = #{status},</if>
+            <if test="logisticsNo != null">logistics_no = #{logisticsNo},</if>
+            <if test="logisticsCompany != null">logistics_company = #{logisticsCompany},</if>
+            <if test="sellerRemark != null">seller_remark = #{sellerRemark},</if>
+            <if test="closeReason != null">close_reason = #{closeReason},</if>
+            <if test="payTime != null">pay_time = #{payTime},</if>
+            <if test="shipTime != null">ship_time = #{shipTime},</if>
+            <if test="receiveTime != null">receive_time = #{receiveTime},</if>
+            update_time = NOW()
+        </set>
+        WHERE id = #{id}
+    </update>
 
 </mapper>

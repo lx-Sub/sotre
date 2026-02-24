@@ -9,30 +9,33 @@
         <result column="title" property="title"/>
         <result column="content" property="content"/>
         <result column="images" property="images"/>
-        <result column="category_id" property="categoryId"/>
-        <result column="category_name" property="categoryName"/>
+        <result column="category" property="category"/>
         <result column="view_count" property="viewCount"/>
         <result column="like_count" property="likeCount"/>
         <result column="comment_count" property="commentCount"/>
-        <result column="is_top" property="isTop"/>
         <result column="is_essence" property="isEssence"/>
+        <result column="is_top" property="isTop"/>
         <result column="status" property="status"/>
+        <result column="audit_remark" property="auditRemark"/>  <!-- 添加这一行 -->
+        <result column="audit_time" property="auditTime"/>      <!-- 添加这一行 -->
         <result column="create_time" property="createTime"/>
         <result column="update_time" property="updateTime"/>
     </resultMap>
 
     <sql id="Base_Column_List">
-        id, user_id, title, content, images, category_id, category_name,
-        view_count, like_count, comment_count, is_top, is_essence, status,
+        id, user_id, title, content, images, category, view_count, like_count,
+        comment_count, is_essence, is_top, status, audit_remark, audit_time,  <!-- 添加这两个字段 -->
         create_time, update_time
     </sql>
 
+    <!-- 根据ID查询 -->
     <select id="selectById" resultMap="BaseResultMap">
         SELECT <include refid="Base_Column_List"/>
         FROM post
         WHERE id = #{id}
     </select>
 
+    <!-- 根据用户ID查询 -->
     <select id="selectByUserId" resultMap="BaseResultMap">
         SELECT <include refid="Base_Column_List"/>
         FROM post
@@ -40,45 +43,145 @@
         ORDER BY create_time DESC
     </select>
 
-    <select id="countByUserId" resultType="int">
-        SELECT COUNT(*) FROM post WHERE user_id = #{userId}
+    <!-- 根据条件查询 -->
+    <select id="selectByCondition" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM post
+        <where>
+            <if test="keyword != null and keyword != ''">
+                AND (title LIKE CONCAT('%', #{keyword}, '%')
+                OR content LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+            <if test="status != null">
+                AND status = #{status}
+            </if>
+            <if test="category != null and category != ''">
+                AND category = #{category}
+            </if>
+        </where>
+        ORDER BY
+        is_top DESC,
+        CASE
+        WHEN status = 0 THEN 0
+        ELSE 1
+        END,
+        create_time DESC
     </select>
 
+    <!-- 查询所有 -->
     <select id="selectAll" resultMap="BaseResultMap">
         SELECT <include refid="Base_Column_List"/>
         FROM post
-        ORDER BY is_top DESC, create_time DESC
+        ORDER BY create_time DESC
     </select>
 
+    <!-- 查询待审核 -->
+    <select id="selectPending" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM post
+        WHERE status = 0
+        ORDER BY create_time ASC
+    </select>
+
+    <!-- 插入 -->
     <insert id="insert" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO post (
-            user_id, title, content, images, category_id, category_name,
-            create_time
+            user_id, title, content, images, category, view_count,
+            like_count, comment_count, is_essence, is_top, status, create_time
         ) VALUES (
-            #{userId}, #{title}, #{content}, #{images}, #{categoryId}, #{categoryName},
-            #{createTime}
+            #{user_id}, #{title}, #{content}, #{images}, #{category},
+            #{viewCount}, #{likeCount}, #{commentCount}, #{isEssence},
+            #{isTop}, #{status}, NOW()
         )
     </insert>
 
+    <!-- 更新 -->
     <update id="updateById">
         UPDATE post
         <set>
             <if test="title != null">title = #{title},</if>
             <if test="content != null">content = #{content},</if>
             <if test="images != null">images = #{images},</if>
-            <if test="categoryId != null">category_id = #{categoryId},</if>
-            <if test="categoryName != null">category_name = #{categoryName},</if>
+            <if test="category != null">category = #{category},</if>
             <if test="viewCount != null">view_count = #{viewCount},</if>
             <if test="likeCount != null">like_count = #{likeCount},</if>
             <if test="commentCount != null">comment_count = #{commentCount},</if>
-            <if test="isTop != null">is_top = #{isTop},</if>
             <if test="isEssence != null">is_essence = #{isEssence},</if>
+            <if test="isTop != null">is_top = #{isTop},</if>
             <if test="status != null">status = #{status},</if>
-            update_time = #{updateTime}
+            <if test="auditRemark != null">audit_remark = #{auditRemark},</if>  <!-- 添加 -->
+            <if test="auditTime != null">audit_time = #{auditTime},</if>        <!-- 添加 -->
+            update_time = NOW()
         </set>
         WHERE id = #{id}
     </update>
 
+    <!-- 更新状态 -->
+    <update id="updateStatus">
+        UPDATE post
+        SET status = #{status},
+            update_time = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <!-- 更新审核信息 -->
+    <update id="updateAuditInfo">
+        UPDATE post
+        SET status = #{status},
+            audit_remark = #{auditRemark},
+            audit_time = NOW(),
+            update_time = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <!-- 更新精华状态 -->
+    <update id="updateEssence">
+        UPDATE post
+        SET is_essence = #{isEssence},
+            update_time = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <!-- 更新置顶状态 -->
+    <update id="updateTop">
+        UPDATE post
+        SET is_top = #{isTop},
+            update_time = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <!-- 增加浏览次数 -->
+    <update id="incrementViewCount">
+        UPDATE post
+        SET view_count = view_count + 1
+        WHERE id = #{id}
+    </update>
+
+    <!-- 增加点赞次数 -->
+    <update id="incrementLikeCount">
+        UPDATE post
+        SET like_count = like_count + 1
+        WHERE id = #{id}
+    </update>
+
+    <!-- 增加评论次数 -->
+    <update id="incrementCommentCount">
+        UPDATE post
+        SET comment_count = comment_count + 1
+        WHERE id = #{id}
+    </update>
+
+    <!-- 统计用户帖子数 -->
+    <select id="countByUserId" resultType="int">
+        SELECT COUNT(*) FROM post WHERE user_id = #{userId}
+    </select>
+
+    <!-- 统计待审核帖子数 -->
+    <select id="countPending" resultType="int">
+        SELECT COUNT(*) FROM post WHERE status = 0
+    </select>
+
+    <!-- 删除 -->
     <delete id="deleteById">
         DELETE FROM post WHERE id = #{id}
     </delete>
