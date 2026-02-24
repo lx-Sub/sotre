@@ -150,4 +150,26 @@ public interface ProductMapper {
      * 查询热门商品
      */
     List<Product> selectHotProducts(@Param("limit") Integer limit);
+
+    // 在 ProductMapper.java 中添加以下方法
+
+    /**
+     * 根据商家ID查询商品
+     */
+    List<Product> selectByMerchantId(@Param("merchantId") Long merchantId,
+                                     @Param("keyword") String keyword,
+                                     @Param("category") String category,
+                                     @Param("status") Integer status);
+
+    /**
+     * 统计商家商品数量
+     */
+    int countByMerchantId(@Param("merchantId") Long merchantId);
+
+    /**
+     * 统计商家访客数
+     */
+    int countVisitorsByMerchantId(@Param("merchantId") Long merchantId,
+                                  @Param("startDate") java.time.LocalDateTime startDate,
+                                  @Param("endDate") java.time.LocalDateTime endDate);
 }

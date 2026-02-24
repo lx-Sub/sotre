@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rabbiter.hrm.mapper.ConsultMapper">
+
+    <resultMap id="BaseResultMap" type="com.rabbiter.hrm.entity.Consult">
+        <id column="id" property="id"/>
+        <result column="user_id" property="userId"/>
+        <result column="product_id" property="productId"/>
+        <result column="content" property="content"/>
+        <result column="status" property="status"/>
+        <result column="reply_content" property="replyContent"/>
+        <result column="reply_time" property="replyTime"/>
+        <result column="create_time" property="createTime"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, user_id, product_id, content, status, reply_content, reply_time, create_time
+    </sql>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM consult
+        WHERE id = #{id}
+    </select>
+
+    <select id="selectByProductId" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM consult
+        WHERE product_id = #{productId}
+        ORDER BY create_time DESC
+    </select>
+
+    <select id="selectByMerchantId" resultMap="BaseResultMap">
+        SELECT c.*, p.name as product_name
+        FROM consult c
+        INNER JOIN product p ON c.product_id = p.id
+        WHERE p.user_id = #{merchantId}
+        <if test="status != null">
+            AND c.status = #{status}
+        </if>
+        ORDER BY
+        CASE WHEN c.status = 0 THEN 0 ELSE 1 END,
+        c.create_time DESC
+    </select>
+
+    <select id="selectPendingByMerchantId" resultMap="BaseResultMap">
+        SELECT c.*
+        FROM consult c
+        INNER JOIN product p ON c.product_id = p.id
+        WHERE p.user_id = #{merchantId} AND c.status = 0
+        ORDER BY c.create_time ASC
+    </select>
+
+    <select id="countPendingByMerchantId" resultType="int">
+        SELECT COUNT(*)
+        FROM consult c
+        INNER JOIN product p ON c.product_id = p.id
+        WHERE p.user_id = #{merchantId} AND c.status = 0
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO consult (user_id, product_id, content, status, create_time)
+        VALUES (#{userId}, #{productId}, #{content}, #{status}, NOW())
+    </insert>
+
+    <update id="updateById">
+        UPDATE consult
+        <set>
+            <if test="status != null">status = #{status},</if>
+            <if test="replyContent != null">reply_content = #{replyContent},</if>
+            <if test="replyTime != null">reply_time = #{replyTime},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+</mapper>

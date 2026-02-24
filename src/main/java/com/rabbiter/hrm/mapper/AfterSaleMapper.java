@@ -104,4 +104,17 @@ public interface AfterSaleMapper {
      * 删除售后
      */
     void deleteById(@Param("id") Long id);
+
+    // 在 AfterSaleMapper.java 中添加以下方法
+
+    /**
+     * 根据卖家ID查询售后
+     */
+    List<AfterSale> selectBySellerId(@Param("sellerId") Long sellerId,
+                                     @Param("status") Integer status);
+
+    /**
+     * 统计卖家待处理售后数
+     */
+    int countPendingBySellerId(@Param("sellerId") Long sellerId);
 }

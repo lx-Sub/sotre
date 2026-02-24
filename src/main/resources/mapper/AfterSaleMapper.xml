@@ -199,4 +199,32 @@
         DELETE FROM after_sale WHERE id = #{id}
     </delete>
 
+    <!-- 在 AfterSaleMapper.xml 中添加以下内容 -->
+
+    <!-- 根据卖家ID查询售后 -->
+    <select id="selectBySellerId" resultMap="BaseResultMap">
+        SELECT a.*, o.order_no
+        FROM after_sale a
+        INNER JOIN `order` o ON a.order_id = o.id
+        WHERE o.seller_id = #{sellerId}
+        <if test="status != null">
+            AND a.status = #{status}
+        </if>
+        ORDER BY
+        CASE
+        WHEN a.status IN (0, 3) THEN 0  <!-- 待处理、仲裁中优先 -->
+        ELSE 1
+        END,
+        a.create_time DESC
+    </select>
+
+    <!-- 统计卖家待处理售后数 -->
+    <select id="countPendingBySellerId" resultType="int">
+        SELECT COUNT(*)
+        FROM after_sale a
+        INNER JOIN `order` o ON a.order_id = o.id
+        WHERE o.seller_id = #{sellerId}
+        AND a.status IN (0, 3)  <!-- 待处理、仲裁中 -->
+    </select>
+
 </mapper>

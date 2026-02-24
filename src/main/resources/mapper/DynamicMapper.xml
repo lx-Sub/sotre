@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rabbiter.hrm.mapper.DynamicMapper">
+
+    <resultMap id="BaseResultMap" type="com.rabbiter.hrm.entity.Dynamic">
+        <id column="id" property="id"/>
+        <result column="shop_id" property="shopId"/>
+        <result column="merchant_id" property="merchantId"/>
+        <result column="title" property="title"/>
+        <result column="content" property="content"/>
+        <result column="images" property="images"/>
+        <result column="video_url" property="videoUrl"/>
+        <result column="product_id" property="productId"/>
+        <result column="view_count" property="viewCount"/>
+        <result column="like_count" property="likeCount"/>
+        <result column="comment_count" property="commentCount"/>
+        <result column="status" property="status"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, shop_id, merchant_id, title, content, images, video_url, product_id,
+        view_count, like_count, comment_count, status, create_time, update_time
+    </sql>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM dynamic
+        WHERE id = #{id}
+    </select>
+
+    <select id="selectByMerchantId" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM dynamic
+        WHERE merchant_id = #{merchantId}
+        ORDER BY create_time DESC
+    </select>
+
+    <select id="selectByShopId" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM dynamic
+        WHERE shop_id = #{shopId}
+        ORDER BY create_time DESC
+        LIMIT #{pageSize} OFFSET #{pageNum}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO dynamic (
+            shop_id, merchant_id, title, content, images, video_url,
+            product_id, view_count, like_count, comment_count, status, create_time
+        ) VALUES (
+            #{shopId}, #{merchantId}, #{title}, #{content}, #{images}, #{videoUrl},
+            #{productId}, 0, 0, 0, #{status}, NOW()
+        )
+    </insert>
+
+    <update id="updateById">
+        UPDATE dynamic
+        <set>
+            <if test="title != null">title = #{title},</if>
+            <if test="content != null">content = #{content},</if>
+            <if test="images != null">images = #{images},</if>
+            <if test="videoUrl != null">video_url = #{videoUrl},</if>
+            <if test="productId != null">product_id = #{productId},</if>
+            <if test="status != null">status = #{status},</if>
+            update_time = NOW()
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <update id="incrementViewCount">
+        UPDATE dynamic SET view_count = view_count + 1 WHERE id = #{id}
+    </update>
+
+    <update id="incrementLikeCount">
+        UPDATE dynamic SET like_count = like_count + 1 WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM dynamic WHERE id = #{id}
+    </delete>
+
+</mapper>

@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rabbiter.hrm.mapper.CouponMapper">
+
+    <resultMap id="BaseResultMap" type="com.rabbiter.hrm.entity.Coupon">
+        <id column="id" property="id"/>
+        <result column="shop_id" property="shopId"/>
+        <result column="name" property="name"/>
+        <result column="type" property="type"/>
+        <result column="condition_amount" property="conditionAmount"/>
+        <result column="discount_amount" property="discountAmount"/>
+        <result column="discount_rate" property="discountRate"/>
+        <result column="total_count" property="totalCount"/>
+        <result column="remaining_count" property="remainingCount"/>
+        <result column="per_limit" property="perLimit"/>
+        <result column="start_time" property="startTime"/>
+        <result column="end_time" property="endTime"/>
+        <result column="status" property="status"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, shop_id, name, type, condition_amount, discount_amount, discount_rate,
+        total_count, remaining_count, per_limit, start_time, end_time, status,
+        create_time, update_time
+    </sql>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM coupon
+        WHERE id = #{id}
+    </select>
+
+    <select id="selectByShopId" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM coupon
+        WHERE shop_id = #{shopId}
+        <if test="status != null">
+            AND status = #{status}
+        </if>
+        ORDER BY create_time DESC
+    </select>
+
+    <select id="selectActiveCoupons" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM coupon
+        WHERE shop_id = #{shopId}
+        AND status = 1
+        AND start_time &lt;= NOW()
+        AND end_time >= NOW()
+        AND remaining_count > 0
+        ORDER BY create_time DESC
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO coupon (
+            shop_id, name, type, condition_amount, discount_amount, discount_rate,
+            total_count, remaining_count, per_limit, start_time, end_time, status, create_time
+        ) VALUES (
+            #{shopId}, #{name}, #{type}, #{conditionAmount}, #{discountAmount}, #{discountRate},
+            #{totalCount}, #{remainingCount}, #{perLimit}, #{startTime}, #{endTime}, #{status}, NOW()
+        )
+    </insert>
+
+    <update id="updateById">
+        UPDATE coupon
+        <set>
+            <if test="name != null">name = #{name},</if>
+            <if test="type != null">type = #{type},</if>
+            <if test="conditionAmount != null">condition_amount = #{conditionAmount},</if>
+            <if test="discountAmount != null">discount_amount = #{discountAmount},</if>
+            <if test="discountRate != null">discount_rate = #{discountRate},</if>
+            <if test="totalCount != null">total_count = #{totalCount},</if>
+            <if test="remainingCount != null">remaining_count = #{remainingCount},</if>
+            <if test="perLimit != null">per_limit = #{perLimit},</if>
+            <if test="startTime != null">start_time = #{startTime},</if>
+            <if test="endTime != null">end_time = #{endTime},</if>
+            <if test="status != null">status = #{status},</if>
+            update_time = NOW()
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateStatus">
+        UPDATE coupon
+        SET status = #{status},
+            update_time = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <update id="decreaseRemainingCount">
+        UPDATE coupon
+        SET remaining_count = remaining_count - 1
+        WHERE id = #{id} AND remaining_count > 0
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM coupon WHERE id = #{id}
+    </delete>
+
+</mapper>

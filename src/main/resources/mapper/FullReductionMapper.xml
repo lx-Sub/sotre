@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.rabbiter.hrm.mapper.FullReductionMapper">
+
+    <resultMap id="ReductionResultMap" type="com.rabbiter.hrm.entity.FullReduction">
+        <id column="id" property="id"/>
+        <result column="shop_id" property="shopId"/>
+        <result column="name" property="name"/>
+        <result column="start_time" property="startTime"/>
+        <result column="end_time" property="endTime"/>
+        <result column="status" property="status"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <resultMap id="RuleResultMap" type="com.rabbiter.hrm.entity.FullReductionRule">
+        <id column="id" property="id"/>
+        <result column="reduction_id" property="reductionId"/>
+        <result column="condition_amount" property="conditionAmount"/>
+        <result column="discount_amount" property="discountAmount"/>
+    </resultMap>
+
+    <sql id="Reduction_Column_List">
+        id, shop_id, name, start_time, end_time, status, create_time, update_time
+    </sql>
+
+    <sql id="Rule_Column_List">
+        id, reduction_id, condition_amount, discount_amount
+    </sql>
+
+    <!-- 活动相关 -->
+    <select id="selectById" resultMap="ReductionResultMap">
+        SELECT <include refid="Reduction_Column_List"/>
+        FROM full_reduction
+        WHERE id = #{id}
+    </select>
+
+    <select id="selectByShopId" resultMap="ReductionResultMap">
+        SELECT <include refid="Reduction_Column_List"/>
+        FROM full_reduction
+        WHERE shop_id = #{shopId}
+        <if test="status != null">
+            AND status = #{status}
+        </if>
+        ORDER BY create_time DESC
+    </select>
+
+    <select id="selectActiveReductions" resultMap="ReductionResultMap">
+        SELECT <include refid="Reduction_Column_List"/>
+        FROM full_reduction
+        WHERE shop_id = #{shopId}
+        AND status = 1
+        AND start_time &lt;= NOW()
+        AND end_time >= NOW()
+        ORDER BY create_time DESC
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO full_reduction (shop_id, name, start_time, end_time, status, create_time)
+        VALUES (#{shopId}, #{name}, #{startTime}, #{endTime}, #{status}, NOW())
+    </insert>
+
+    <update id="updateById">
+        UPDATE full_reduction
+        <set>
+            <if test="name != null">name = #{name},</if>
+            <if test="startTime != null">start_time = #{startTime},</if>
+            <if test="endTime != null">end_time = #{endTime},</if>
+            <if test="status != null">status = #{status},</if>
+            update_time = NOW()
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateStatus">
+        UPDATE full_reduction
+        SET status = #{status},
+            update_time = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM full_reduction WHERE id = #{id}
+    </delete>
+
+    <!-- 规则相关 -->
+    <insert id="insertRule" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO full_reduction_rule (reduction_id, condition_amount, discount_amount)
+        VALUES (#{reductionId}, #{conditionAmount}, #{discountAmount})
+    </insert>
+
+    <select id="selectRulesByReductionId" resultMap="RuleResultMap">
+        SELECT <include refid="Rule_Column_List"/>
+        FROM full_reduction_rule
+        WHERE reduction_id = #{reductionId}
+        ORDER BY condition_amount ASC
+    </select>
+
+    <delete id="deleteRulesByReductionId">
+        DELETE FROM full_reduction_rule WHERE reduction_id = #{reductionId}
+    </delete>
+
+</mapper>

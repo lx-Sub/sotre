@@ -897,3 +897,195 @@ where
     (`store`.`user_verification`.`status` = 0)
 order by
     `create_time` desc;
+
+    -- =====================================================
+-- 商家模块相关表
+-- =====================================================
+
+-- 1. 店铺表
+CREATE TABLE IF NOT EXISTS `shop` (
+    `id` BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '店铺ID',
+    `merchant_id` BIGINT NOT NULL COMMENT '商家ID',
+    `shop_name` VARCHAR(100) NOT NULL COMMENT '店铺名称',
+    `shop_logo` VARCHAR(500) COMMENT '店铺Logo',
+    `shop_banner` VARCHAR(500) COMMENT '店铺横幅',
+    `shop_desc` TEXT COMMENT '店铺简介',
+    `shop_address` VARCHAR(200) COMMENT '店铺地址',
+    `contact_phone` VARCHAR(20) COMMENT '联系电话',
+    `contact_email` VARCHAR(100) COMMENT '联系邮箱',
+    `business_license` VARCHAR(500) COMMENT '营业执照',
+    `brand_authorization` JSON COMMENT '品牌授权书数组',
+    `audit_status` TINYINT NOT NULL DEFAULT 0 COMMENT '审核状态：0-待审核 1-已通过 2-已驳回',
+    `audit_remark` VARCHAR(500) COMMENT '审核备注',
+    `audit_time` DATETIME COMMENT '审核时间',
+    `status` TINYINT NOT NULL DEFAULT 0 COMMENT '店铺状态：0-关闭 1-营业中',
+    `score` DECIMAL(3,2) DEFAULT 5.00 COMMENT '店铺评分',
+    `sale_count` INT NOT NULL DEFAULT 0 COMMENT '总销量',
+    `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    UNIQUE INDEX `uk_merchant_id` (`merchant_id`),
+    INDEX `idx_audit_status` (`audit_status`),
+    INDEX `idx_status` (`status`),
+    INDEX `idx_score` (`score`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='店铺表';
+
+-- 2. 商品规格表
+CREATE TABLE IF NOT EXISTS `product_spec` (
+    `id` BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '规格ID',
+    `product_id` BIGINT NOT NULL COMMENT '商品ID',
+    `spec_name` VARCHAR(50) NOT NULL COMMENT '规格名称（如：颜色、尺寸）',
+    `spec_value` VARCHAR(50) NOT NULL COMMENT '规格值（如：红色、XL码）',
+    `stock` INT NOT NULL DEFAULT 0 COMMENT '库存',
+    `price` DECIMAL(10,2) COMMENT '规格价格（为空则使用商品价格）',
+    INDEX `idx_product_id` (`product_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='商品规格表';
+
+-- 3. 优惠券表
+CREATE TABLE IF NOT EXISTS `coupon` (
+    `id` BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '优惠券ID',
+    `shop_id` BIGINT NOT NULL COMMENT '店铺ID',
+    `name` VARCHAR(100) NOT NULL COMMENT '优惠券名称',
+    `type` TINYINT NOT NULL COMMENT '类型：1-满减券 2-折扣券',
+    `condition_amount` DECIMAL(10,2) COMMENT '满减条件',
+    `discount_amount` DECIMAL(10,2) COMMENT '减免金额',
+    `discount_rate` DECIMAL(3,2) COMMENT '折扣率',
+    `total_count` INT NOT NULL COMMENT '发放总量',
+    `remaining_count` INT NOT NULL COMMENT '剩余数量',
+    `per_limit` INT NOT NULL DEFAULT 1 COMMENT '每人限领',
+    `start_time` DATETIME NOT NULL COMMENT '开始时间',
+    `end_time` DATETIME NOT NULL COMMENT '结束时间',
+    `status` TINYINT NOT NULL DEFAULT 0 COMMENT '状态：0-下架 1-上架 2-已结束',
+    `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    INDEX `idx_shop_id` (`shop_id`),
+    INDEX `idx_status` (`status`),
+    INDEX `idx_time_range` (`start_time`, `end_time`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='优惠券表';
+
+-- 4. 满减活动表
+CREATE TABLE IF NOT EXISTS `full_reduction` (
+    `id` BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '活动ID',
+    `shop_id` BIGINT NOT NULL COMMENT '店铺ID',
+    `name` VARCHAR(100) NOT NULL COMMENT '活动名称',
+    `start_time` DATETIME NOT NULL COMMENT '开始时间',
+    `end_time` DATETIME NOT NULL COMMENT '结束时间',
+    `status` TINYINT NOT NULL DEFAULT 0 COMMENT '状态：0-未开始 1-进行中 2-已结束',
+    `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    INDEX `idx_shop_id` (`shop_id`),
+    INDEX `idx_status` (`status`),
+    INDEX `idx_time_range` (`start_time`, `end_time`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='满减活动表';
+
+-- 5. 满减活动规则表
+CREATE TABLE IF NOT EXISTS `full_reduction_rule` (
+    `id` BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '规则ID',
+    `reduction_id` BIGINT NOT NULL COMMENT '活动ID',
+    `condition_amount` DECIMAL(10,2) NOT NULL COMMENT '满减条件',
+    `discount_amount` DECIMAL(10,2) NOT NULL COMMENT '减免金额',
+    INDEX `idx_reduction_id` (`reduction_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='满减活动规则表';
+
+-- 6. 咨询表
+CREATE TABLE IF NOT EXISTS `consult` (
+    `id` BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '咨询ID',
+    `user_id` BIGINT NOT NULL COMMENT '咨询用户ID',
+    `product_id` BIGINT NOT NULL COMMENT '商品ID',
+    `content` VARCHAR(500) NOT NULL COMMENT '咨询内容',
+    `status` TINYINT NOT NULL DEFAULT 0 COMMENT '状态：0-待回复 1-已回复',
+    `reply_content` VARCHAR(500) COMMENT '回复内容',
+    `reply_time` DATETIME COMMENT '回复时间',
+    `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    INDEX `idx_user_id` (`user_id`),
+    INDEX `idx_product_id` (`product_id`),
+    INDEX `idx_status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='咨询表';
+
+-- 7. 品牌动态表
+CREATE TABLE IF NOT EXISTS `dynamic` (
+    `id` BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '动态ID',
+    `shop_id` BIGINT NOT NULL COMMENT '店铺ID',
+    `merchant_id` BIGINT NOT NULL COMMENT '商家ID',
+    `title` VARCHAR(200) NOT NULL COMMENT '标题',
+    `content` TEXT NOT NULL COMMENT '内容',
+    `images` JSON COMMENT '图片数组',
+    `video_url` VARCHAR(500) COMMENT '视频URL',
+    `product_id` BIGINT COMMENT '关联商品ID',
+    `view_count` INT NOT NULL DEFAULT 0 COMMENT '浏览次数',
+    `like_count` INT NOT NULL DEFAULT 0 COMMENT '点赞次数',
+    `comment_count` INT NOT NULL DEFAULT 0 COMMENT '评论次数',
+    `status` TINYINT NOT NULL DEFAULT 1 COMMENT '状态：0-草稿 1-已发布',
+    `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    INDEX `idx_shop_id` (`shop_id`),
+    INDEX `idx_merchant_id` (`merchant_id`),
+    INDEX `idx_status` (`status`),
+    INDEX `idx_create_time` (`create_time`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='品牌动态表';
+
+-- 8. 评价表
+CREATE TABLE IF NOT EXISTS `review` (
+    `id` BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '评价ID',
+    `order_id` BIGINT NOT NULL COMMENT '订单ID',
+    `user_id` BIGINT NOT NULL COMMENT '用户ID',
+    `product_id` BIGINT NOT NULL COMMENT '商品ID',
+    `match_score` TINYINT NOT NULL COMMENT '描述相符评分（1-5）',
+    `communication_score` TINYINT NOT NULL COMMENT '沟通态度评分（1-5）',
+    `shipping_score` TINYINT NOT NULL COMMENT '发货速度评分（1-5）',
+    `overall_score` TINYINT NOT NULL COMMENT '综合评分（1-5）',
+    `content` VARCHAR(1000) COMMENT '评价内容',
+    `images` JSON COMMENT '评价图片',
+    `reply_content` VARCHAR(1000) COMMENT '商家回复',
+    `reply_time` DATETIME COMMENT '回复时间',
+    `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    UNIQUE INDEX `uk_order_id` (`order_id`),
+    INDEX `idx_user_id` (`user_id`),
+    INDEX `idx_product_id` (`product_id`),
+    INDEX `idx_overall_score` (`overall_score`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='评价表';
+
+-- 9. 商品访问记录表（用于统计访客数）
+CREATE TABLE IF NOT EXISTS `product_visit` (
+    `id` BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '访问ID',
+    `product_id` BIGINT NOT NULL COMMENT '商品ID',
+    `visitor_id` BIGINT COMMENT '访客ID（未登录可为空）',
+    `visit_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '访问时间',
+    INDEX `idx_product_id` (`product_id`),
+    INDEX `idx_visitor_id` (`visitor_id`),
+    INDEX `idx_visit_time` (`visit_time`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='商品访问记录表';
+
+-- =====================================================
+-- 外键约束（可选）
+-- =====================================================
+
+-- 如果需要外键约束，可以取消下面的注释
+/*
+ALTER TABLE `shop`
+ADD CONSTRAINT `fk_shop_merchant` FOREIGN KEY (`merchant_id`) REFERENCES `user` (`id`) ON DELETE CASCADE;
+
+ALTER TABLE `product_spec`
+ADD CONSTRAINT `fk_product_spec_product` FOREIGN KEY (`product_id`) REFERENCES `product` (`id`) ON DELETE CASCADE;
+
+ALTER TABLE `coupon`
+ADD CONSTRAINT `fk_coupon_shop` FOREIGN KEY (`shop_id`) REFERENCES `shop` (`id`) ON DELETE CASCADE;
+
+ALTER TABLE `full_reduction`
+ADD CONSTRAINT `fk_full_reduction_shop` FOREIGN KEY (`shop_id`) REFERENCES `shop` (`id`) ON DELETE CASCADE;
+
+ALTER TABLE `full_reduction_rule`
+ADD CONSTRAINT `fk_rule_reduction` FOREIGN KEY (`reduction_id`) REFERENCES `full_reduction` (`id`) ON DELETE CASCADE;
+
+ALTER TABLE `consult`
+ADD CONSTRAINT `fk_consult_product` FOREIGN KEY (`product_id`) REFERENCES `product` (`id`) ON DELETE CASCADE;
+
+ALTER TABLE `dynamic`
+ADD CONSTRAINT `fk_dynamic_shop` FOREIGN KEY (`shop_id`) REFERENCES `shop` (`id`) ON DELETE CASCADE;
+
+ALTER TABLE `review`
+ADD CONSTRAINT `fk_review_order` FOREIGN KEY (`order_id`) REFERENCES `order` (`id`) ON DELETE CASCADE,
+ADD CONSTRAINT `fk_review_user` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE CASCADE;
+
+ALTER TABLE `product_visit`
+ADD CONSTRAINT `fk_visit_product` FOREIGN KEY (`product_id`) REFERENCES `product` (`id`) ON DELETE CASCADE;
+*/

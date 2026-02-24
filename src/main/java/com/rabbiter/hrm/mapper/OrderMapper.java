@@ -162,4 +162,60 @@ public interface OrderMapper {
      * 根据商品分类统计订单数
      */
     int countByProductCategory(@Param("category") String category);
+
+    // 在 OrderMapper.java 中添加以下方法
+
+    /**
+     * 根据卖家ID查询待处理订单
+     */
+    List<Order> selectPendingBySellerId(@Param("sellerId") Long sellerId);
+
+    /**
+     * 根据卖家ID和条件查询订单
+     */
+    List<Order> selectBySellerIdAndCondition(@Param("sellerId") Long sellerId,
+                                             @Param("queryDTO") OrderQueryDTO queryDTO);
+
+    /**
+     * 统计卖家订单数
+     */
+    int countBySellerId(@Param("sellerId") Long sellerId);
+
+    /**
+     * 统计卖家销售额
+     */
+    BigDecimal sumAmountBySellerId(@Param("sellerId") Long sellerId);
+
+    /**
+     * 根据卖家ID和日期统计订单数
+     */
+    int countBySellerIdAndDate(@Param("sellerId") Long sellerId,
+                               @Param("startDate") java.time.LocalDateTime startDate,
+                               @Param("endDate") java.time.LocalDateTime endDate);
+
+    /**
+     * 根据卖家ID和日期统计销售额
+     */
+    BigDecimal sumAmountBySellerIdAndDate(@Param("sellerId") Long sellerId,
+                                          @Param("startDate") java.time.LocalDateTime startDate,
+                                          @Param("endDate") java.time.LocalDateTime endDate);
+
+    /**
+     * 统计卖家待处理订单数
+     */
+    int countPendingBySellerId(@Param("sellerId") Long sellerId);
+
+    /**
+     * 卖家销售趋势
+     */
+    List<Map<String, Object>> salesTrendByMerchantId(@Param("merchantId") Long merchantId,
+                                                     @Param("startDate") java.time.LocalDateTime startDate,
+                                                     @Param("endDate") java.time.LocalDateTime endDate,
+                                                     @Param("groupBy") String groupBy);
+
+    /**
+     * 商品销售排行
+     */
+    List<Map<String, Object>> productRankByMerchantId(@Param("merchantId") Long merchantId,
+                                                      @Param("limit") Integer limit);
 }
