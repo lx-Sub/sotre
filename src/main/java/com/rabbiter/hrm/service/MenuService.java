@@ -11,10 +11,13 @@ import com.rabbiter.hrm.dto.ResponseDTO;
 import com.rabbiter.hrm.entity.Menu;
 import com.rabbiter.hrm.entity.RoleMenu;
 import com.rabbiter.hrm.entity.StaffRole;
+import com.rabbiter.hrm.entity.User;
 import com.rabbiter.hrm.enums.BusinessStatusEnum;
 import com.rabbiter.hrm.exception.ServiceException;
 import com.rabbiter.hrm.mapper.MenuMapper;
+import com.rabbiter.hrm.mapper.UserMapper;
 import com.rabbiter.hrm.util.HutoolExcelUtil;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -40,6 +43,9 @@ public class MenuService extends ServiceImpl<MenuMapper, Menu> {
 
     @Resource
     private RoleMenuService roleMenuService;
+
+    @Autowired
+    private UserMapper userMapper;
 
     @Resource
     private StaffRoleService staffRoleService;
@@ -173,17 +179,14 @@ public class MenuService extends ServiceImpl<MenuMapper, Menu> {
         String token = request.getHeader("token");// 从 http 请求头中取出 token
         if (StrUtil.isNotBlank(token)) {
             // 获取token中的id
-            Integer id = Integer.valueOf(JWT.decode(token).getAudience().get(0));
+            String id = JWT.decode(token).getAudience().get(0);
             Set<Menu> set = new HashSet<>();
-            List<StaffRole> staffRoleList = this.staffRoleService.list(new QueryWrapper<StaffRole>()
-                    .eq("staff_id", id).eq("status", 1));
-            for (StaffRole staffRole : staffRoleList) {
-                List<RoleMenu> roleMenuList = this.roleMenuService.list(new QueryWrapper<RoleMenu>()
-                        .eq("role_id", staffRole.getRoleId()).eq("status", 1));
-                for (RoleMenu roleMenu : roleMenuList) {
-                    List<Menu> menuList = list(new QueryWrapper<Menu>().eq("id", roleMenu.getMenuId()));
-                    set.addAll(menuList); // 添加到set中，并去重
-                }
+            User user = userMapper.selectByPhone(String.valueOf(id));
+            List<RoleMenu> roleMenuList = this.roleMenuService.list(new QueryWrapper<RoleMenu>()
+                    .eq("role_id", user.getRole()).eq("status", 1));
+            for (RoleMenu roleMenu : roleMenuList) {
+                List<Menu> menuList = list(new QueryWrapper<Menu>().eq("id", roleMenu.getMenuId()));
+                set.addAll(menuList); // 添加到set中，并去重
             }
             List<Menu> menus = new ArrayList<>(set);
             // 根据获得的菜单，为父级菜单设置子菜单

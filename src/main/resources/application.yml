@@ -36,6 +36,8 @@ mybatis-plus:
       id-type: auto
   # 确保mapper-locations正确（如果有XML文件）
   mapper-locations: classpath:mapper/*.xml
+  # 扫描通用枚举包
+  type-enums-package: com.rabbiter.hrm.enums
 
 
 

@@ -141,11 +141,10 @@ public class UserServiceImpl implements UserService {
             // 更新最后登录时间
             user.setLastLoginTime(LocalDateTime.now());
             user.setLastLoginIp(SecurityUtils.getClientIp());
-            userMapper.updateById(user);
             SecurityUtils.setCurrentUser(user);
 
             // 生成token
-            token = jwtUtil.generateToken(user.getId().intValue(), user.getPhone());
+            token = jwtUtil.generateToken(user.getPhone(), user.getPhone());
         }else {
             Admin admin = adminMapper.selectByUsername(loginDTO.getPhone());
             if (admin == null) {
@@ -156,7 +155,7 @@ public class UserServiceImpl implements UserService {
                 throw new BusinessException(BusinessStatusEnum.USER_FROZEN.getCode(), "账号已被冻结");
             }
             SecurityUtils.setCurrentAdmin(admin);
-            token = jwtUtil.generateToken(admin.getId().intValue(), admin.getPhone());
+            token = jwtUtil.generateToken(admin.getPhone(), admin.getPhone());
         }
 
        return token;

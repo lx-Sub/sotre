@@ -22,6 +22,11 @@ public class JWTUtil {
      * @param password
      * @return
      */
+    public static String generateToken(String id,String password) {
+        return JWT.create().withAudience(id.toString()) // 设置载荷
+                .withExpiresAt(DateUtil.offsetHour(new Date(), 2)) // 设置签名过期的时间
+                .sign(Algorithm.HMAC256(password)); // 签名 Signature
+    }
     public static String generateToken(Integer id,String password) {
         return JWT.create().withAudience(id.toString()) // 设置载荷
                 .withExpiresAt(DateUtil.offsetHour(new Date(), 2)) // 设置签名过期的时间
