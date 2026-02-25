@@ -95,11 +95,11 @@ public class UserServiceImpl implements UserService {
             throw new BusinessException(BusinessStatusEnum.PARAM_ERROR.getCode(), "两次密码不一致");
         }
 
-        // 验证验证码
-        String cacheCode = redisUtil.get("SMS:" + registerDTO.getPhone());
-        if (cacheCode == null || !cacheCode.equals(registerDTO.getVerificationCode())) {
-            throw new BusinessException(BusinessStatusEnum.PARAM_ERROR.getCode(), "验证码错误或已过期");
-        }
+//        // 验证验证码
+//        String cacheCode = redisUtil.get("SMS:" + registerDTO.getPhone());
+//        if (cacheCode == null || !cacheCode.equals(registerDTO.getVerificationCode())) {
+//            throw new BusinessException(BusinessStatusEnum.PARAM_ERROR.getCode(), "验证码错误或已过期");
+//        }
 
         // 检查手机号是否已注册
         User existUser = userMapper.selectByPhone(registerDTO.getPhone());

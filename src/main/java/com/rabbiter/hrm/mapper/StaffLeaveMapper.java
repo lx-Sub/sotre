@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.rabbiter.hrm.entity.StaffLeave;
 import com.rabbiter.hrm.vo.StaffLeaveVO;
+import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
@@ -15,6 +16,7 @@ import org.apache.ibatis.annotations.Select;
  * @Author
  * @since 2024-04-05
  */
+@Mapper
 public interface StaffLeaveMapper extends BaseMapper<StaffLeave> {
 
 

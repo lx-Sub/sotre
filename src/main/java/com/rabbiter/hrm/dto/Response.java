@@ -16,6 +16,9 @@ public class Response {
     public static ResponseDTO success(String message){
         return new ResponseDTO(BusinessStatusEnum.SUCCESS.getCode(), message);
     }
+    public static ResponseDTO success(String token,String message){
+        return new ResponseDTO(BusinessStatusEnum.SUCCESS.getCode(), message,null,token);
+    }
 
     public static ResponseDTO success(Object data){
         return new ResponseDTO(BusinessStatusEnum.SUCCESS,data);

@@ -2,6 +2,7 @@ package com.rabbiter.hrm.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.rabbiter.hrm.entity.City;
+import org.apache.ibatis.annotations.Mapper;
 
 /**
  * <p>
@@ -11,6 +12,7 @@ import com.rabbiter.hrm.entity.City;
  * @Author
  * @since 2024-03-23
  */
+@Mapper
 public interface CityMapper extends BaseMapper<City> {
 
 }

@@ -6,6 +6,7 @@ import com.rabbiter.hrm.entity.Staff;
 import com.rabbiter.hrm.vo.AttendanceMonthVO;
 import com.rabbiter.hrm.vo.StaffAttendanceVO;
 import com.rabbiter.hrm.vo.StaffDeptVO;
+import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
@@ -19,6 +20,7 @@ import java.util.List;
  * @Author
  * @since 2024-01-27
  */
+@Mapper
 public interface StaffMapper extends BaseMapper<Staff> {
 
     @Select("select ss.id staff_id,ss.dept_id,ss.code,ss.name,ss.phone,ss.address,sd.name dept_name from sys_staff ss inner join sys_dept sd on ss.dept_id = sd.id " +

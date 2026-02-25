@@ -14,6 +14,7 @@ import java.util.List;
  * @Author
  * @since 2024-03-29
  */
+@Mapper
 public interface ExpenseMapper extends BaseMapper<Expense> {
 
     /**

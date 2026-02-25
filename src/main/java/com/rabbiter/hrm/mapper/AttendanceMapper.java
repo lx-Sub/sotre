@@ -2,6 +2,7 @@ package com.rabbiter.hrm.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.rabbiter.hrm.entity.Attendance;
+import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
@@ -16,7 +17,7 @@ import java.util.List;
  * @Author
  * @since 2024-03-29
  */
-
+@Mapper
 public interface AttendanceMapper extends BaseMapper<Attendance> {
 
 

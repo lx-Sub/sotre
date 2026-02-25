@@ -37,7 +37,7 @@ public class UserController {
     @PostMapping("/auth/register")
     public ResponseDTO register(@Valid @RequestBody RegisterDTO registerDTO) {
         String token = userService.register(registerDTO);
-        return Response.success("注册成功");
+        return Response.success(token,"注册成功");
     }
 
     /**
@@ -46,7 +46,7 @@ public class UserController {
     @PostMapping("/auth/login")
     public ResponseDTO login(@Valid @RequestBody LoginDTO loginDTO) {
         String token = userService.login(loginDTO);
-        return Response.success("登录成功");
+        return Response.success(token,"登录成功");
     }
 
     /**

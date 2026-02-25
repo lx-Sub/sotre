@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.rabbiter.hrm.entity.Docs;
 import com.rabbiter.hrm.vo.StaffDocsVO;
+import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
@@ -15,6 +16,7 @@ import org.apache.ibatis.annotations.Select;
  * @Author
  * @since 2024-02-24
  */
+@Mapper
 public interface DocsMapper extends BaseMapper<Docs> {
 
     @Select("select sd.*,ss.name staff_name from sys_staff ss left join sys_docs sd on ss.id = sd.staff_id " +

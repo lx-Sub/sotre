@@ -3,6 +3,7 @@ package com.rabbiter.hrm.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.rabbiter.hrm.entity.Dept;
+import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
@@ -16,6 +17,7 @@ import java.util.List;
  * @Author
  * @since 2024-03-07
  */
+@Mapper
 public interface DeptMapper extends BaseMapper<Dept> {
 
     @Select("select * from sys_dept where is_deleted = 0 and parent_id = 0 and name like concat('%',#{name},'%')")

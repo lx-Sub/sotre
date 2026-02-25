@@ -18,12 +18,24 @@ spring:
     path match:
       matching-strategy: ant-path-matcher
 
-
 mybatis-plus:
   configuration:
+    # 开发时用StdOutImpl查看SQL，上线后关闭
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
-  # 扫描通用枚举包
-  type-enums-package: com.rabbiter.hrm.enums
+    # 或者暂时关闭日志测试启动速度
+    # log-impl: org.apache.ibatis.logging.nologging.NoLoggingImpl
+    map-underscore-to-camel-case: true
+    cache-enabled: false
+    lazy-loading-enabled: false
+    aggressive-lazy-loading: false
+    default-fetch-size: 100
+    default-statement-timeout: 2500
+  global-config:
+    banner: false  # 关闭启动banner
+    db-config:
+      id-type: auto
+  # 确保mapper-locations正确（如果有XML文件）
+  mapper-locations: classpath:mapper/*.xml
 
 
 

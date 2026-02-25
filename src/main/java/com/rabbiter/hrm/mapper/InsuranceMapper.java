@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.rabbiter.hrm.entity.Insurance;
 import com.rabbiter.hrm.vo.StaffInsuranceVO;
+import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
@@ -17,6 +18,7 @@ import java.util.List;
  * @Author
  * @since 2024-03-23
  */
+@Mapper
 public interface InsuranceMapper extends BaseMapper<Insurance> {
 
 

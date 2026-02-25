@@ -2,6 +2,7 @@ package com.rabbiter.hrm.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.rabbiter.hrm.entity.SalaryDeduct;
+import org.apache.ibatis.annotations.Mapper;
 
 /**
  * <p>
@@ -12,7 +13,7 @@ import com.rabbiter.hrm.entity.SalaryDeduct;
  * @since 2024-03-27
  */
 
-
+@Mapper
 public interface SalaryDeductMapper extends BaseMapper<SalaryDeduct> {
 
 }

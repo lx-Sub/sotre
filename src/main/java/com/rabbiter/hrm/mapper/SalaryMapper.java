@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.rabbiter.hrm.entity.Salary;
 import com.rabbiter.hrm.vo.StaffSalaryVO;
+import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
@@ -17,6 +18,7 @@ import java.util.List;
  * @Author
  * @since 2024-04-06
  */
+@Mapper
 public interface SalaryMapper extends BaseMapper<Salary> {
 
 
