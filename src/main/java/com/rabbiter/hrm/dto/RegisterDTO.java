@@ -39,6 +39,12 @@ public class RegisterDTO {
     private String confirmPassword;
 
     /**
+     * 角色信息
+     */
+    @NotBlank(message = "选择创建的角色信息")
+    private Integer role;
+
+    /**
      * 昵称
      */
     @Size(max = 50, message = "昵称不能超过50字")

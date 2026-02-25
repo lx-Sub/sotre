@@ -41,6 +41,9 @@ public class UserServiceImpl implements UserService {
     private UserMapper userMapper;
 
     @Autowired
+    private AdminMapper adminMapper;
+
+    @Autowired
     private AddressMapper addressMapper;
 
     @Autowired
@@ -95,12 +98,6 @@ public class UserServiceImpl implements UserService {
             throw new BusinessException(BusinessStatusEnum.PARAM_ERROR.getCode(), "两次密码不一致");
         }
 
-//        // 验证验证码
-//        String cacheCode = redisUtil.get("SMS:" + registerDTO.getPhone());
-//        if (cacheCode == null || !cacheCode.equals(registerDTO.getVerificationCode())) {
-//            throw new BusinessException(BusinessStatusEnum.PARAM_ERROR.getCode(), "验证码错误或已过期");
-//        }
-
         // 检查手机号是否已注册
         User existUser = userMapper.selectByPhone(registerDTO.getPhone());
         if (existUser != null) {
@@ -113,7 +110,7 @@ public class UserServiceImpl implements UserService {
         user.setPhone(registerDTO.getPhone());
         user.setNickname(registerDTO.getNickname() != null ? registerDTO.getNickname() : "用户" + registerDTO.getPhone().substring(7));
         user.setPassword(registerDTO.getPassword());
-        user.setRole(1); // 普通用户
+        user.setRole(registerDTO.getRole()); // 角色：1-普通用户 2-商家 3-管理员
         user.setStatus(1); // 正常
         user.setCreditScore(600); // 初始信用分
         user.setVerified(false);
@@ -122,34 +119,40 @@ public class UserServiceImpl implements UserService {
 
         userMapper.insert(user);
 
-        // 删除验证码
-        redisUtil.delete("SMS:" + registerDTO.getPhone());
-
         // 生成token
         return jwtUtil.generateToken(user.getId().intValue(), user.getPhone());
     }
 
     @Override
     public String login(LoginDTO loginDTO) {
-        // 根据手机号查询用户
-        User user = userMapper.selectByPhone(loginDTO.getPhone());
-        if (user == null) {
-            throw new BusinessException(BusinessStatusEnum.USER_NOT_FOUND.getCode(), "用户不存在");
+        String token = "";
+        if (!"3".equals(loginDTO.getRole())){
+            // 根据手机号查询用户
+            User user = userMapper.selectByPhone(loginDTO.getPhone());
+            if (user == null) {
+                throw new BusinessException(BusinessStatusEnum.USER_NOT_FOUND.getCode(), "用户不存在");
+            }
+
+            // 检查用户状态
+            if (user.getStatus() != 1) {
+                throw new BusinessException(BusinessStatusEnum.USER_FROZEN.getCode(), "账号已被冻结");
+            }
+
+            // 更新最后登录时间
+            user.setLastLoginTime(LocalDateTime.now());
+            user.setLastLoginIp(SecurityUtils.getClientIp());
+            userMapper.updateById(user);
+            SecurityUtils.setCurrentUser(user);
+
+            // 生成token
+            token = jwtUtil.generateToken(user.getId().intValue(), user.getPhone());
+        }else {
+            Admin admin = adminMapper.selectByUsername(loginDTO.getPhone());
+            SecurityUtils.setCurrentAdmin(admin);
+            token = jwtUtil.generateToken(admin.getId().intValue(), admin.getPhone());
         }
 
-
-        // 检查用户状态
-        if (user.getStatus() != 1) {
-            throw new BusinessException(BusinessStatusEnum.USER_FROZEN.getCode(), "账号已被冻结");
-        }
-
-        // 更新最后登录时间
-        user.setLastLoginTime(LocalDateTime.now());
-        user.setLastLoginIp(SecurityUtils.getClientIp());
-        userMapper.updateById(user);
-
-        // 生成token
-        return jwtUtil.generateToken(user.getId().intValue(), user.getPhone());
+       return token;
     }
 
     // ==================== 个人资料 ====================
