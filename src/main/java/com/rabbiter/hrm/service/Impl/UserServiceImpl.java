@@ -148,6 +148,13 @@ public class UserServiceImpl implements UserService {
             token = jwtUtil.generateToken(user.getId().intValue(), user.getPhone());
         }else {
             Admin admin = adminMapper.selectByUsername(loginDTO.getPhone());
+            if (admin == null) {
+                throw new BusinessException(BusinessStatusEnum.USER_NOT_FOUND.getCode(), "用户不存在");
+            }
+            // 检查用户状态
+            if (admin.getStatus() != 1) {
+                throw new BusinessException(BusinessStatusEnum.USER_FROZEN.getCode(), "账号已被冻结");
+            }
             SecurityUtils.setCurrentAdmin(admin);
             token = jwtUtil.generateToken(admin.getId().intValue(), admin.getPhone());
         }
