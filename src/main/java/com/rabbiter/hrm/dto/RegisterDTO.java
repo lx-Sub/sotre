@@ -41,7 +41,7 @@ public class RegisterDTO {
     /**
      * 角色信息
      */
-    @NotBlank(message = "选择创建的角色信息")
+    @NotNull(message = "选择创建的角色信息")
     private Integer role;
 
     /**
